@@ -1,0 +1,16 @@
+# Raw data (large — do not commit)
+train/
+test/
+
+# Generated outputs
+outputs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db

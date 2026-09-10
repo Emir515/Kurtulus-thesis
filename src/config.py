@@ -1,0 +1,118 @@
+"""
+Central configuration for all paths, constants, and hyperparameters.
+Import this in notebooks and scripts instead of hardcoding paths.
+"""
+from pathlib import Path
+
+# ── Root ──────────────────────────────────────────────────────────────────────
+ROOT = Path(r'C:\Users\Emırhan\Desktop\MASTER THESIS\Kurtulus-thesis')
+
+# ── Data ──────────────────────────────────────────────────────────────────────
+# Raw data lives in train/ and test/ at project root (not moved — too large)
+TRAIN_GLOB = str(ROOT / 'train' / '**' / '*.parquet')
+TEST_GLOB  = str(ROOT / 'test'  / '**' / '*.parquet')
+
+# Wildcard username variant (portable across user profile renames)
+TRAIN_GLOB_PORTABLE = r'C:\Users\Em*\Desktop\MASTER THESIS\Kurtulus-thesis\train\**\*.parquet'
+TEST_GLOB_PORTABLE  = r'C:\Users\Em*\Desktop\MASTER THESIS\Kurtulus-thesis\test\**\*.parquet'
+
+# ── Outputs ───────────────────────────────────────────────────────────────────
+OUT_DIR      = ROOT / 'outputs'
+PLOTS_DIR    = OUT_DIR / 'plots'
+FEATURES_DIR = OUT_DIR / 'features'
+MODELS_DIR   = OUT_DIR / 'models'
+
+for _d in [PLOTS_DIR, FEATURES_DIR, MODELS_DIR]:
+    _d.mkdir(parents=True, exist_ok=True)
+
+# ── Sensor subsystem schema ───────────────────────────────────────────────────
+LABEL_COLS = [
+    'TIMESTAMP',
+    'TRAIN_IS_IN_FAILURE', 'TRAIN_FAILURE_TYPE',
+    'TRAIN_IS_IN_MAINTENANCE', 'TRAIN_MAINTENANCE_TYPE',
+]
+
+SUBSYSTEMS = {
+    'APU': [
+        'CW1_MAIN_RESERVOIR_PRESSURE', 'CW2_MAIN_RESERVOIR_PRESSURE',
+        'CW1_COMPRESSOR_RUNNING',       'CW2_COMPRESSOR_RUNNING',
+    ],
+    'Brake': [
+        # Brake cylinder pressure (all wagons, both bogies)
+        'CW1_BRAKE_CYLINDER_PRESSURE_BOGIE1', 'CW1_BRAKE_CYLINDER_PRESSURE_BOGIE2',
+        'CW2_BRAKE_CYLINDER_PRESSURE_BOGIE1', 'CW2_BRAKE_CYLINDER_PRESSURE_BOGIE2',
+        'MW1_BRAKE_CYLINDER_PRESSURE_BOGIE1', 'MW1_BRAKE_CYLINDER_PRESSURE_BOGIE2',
+        'MW2_BRAKE_CYLINDER_PRESSURE_BOGIE1', 'MW2_BRAKE_CYLINDER_PRESSURE_BOGIE2',
+        'MW3_BRAKE_CYLINDER_PRESSURE_BOGIE1', 'MW3_BRAKE_CYLINDER_PRESSURE_BOGIE2',
+        'MW4_BRAKE_CYLINDER_PRESSURE_BOGIE1', 'MW4_BRAKE_CYLINDER_PRESSURE_BOGIE2',
+        # Spring brake pressure (all wagons, both bogies)
+        'CW1_SPRING_BRAKE_PRESSURE_BOGIE1', 'CW1_SPRING_BRAKE_PRESSURE_BOGIE2',
+        'CW2_SPRING_BRAKE_PRESSURE_BOGIE1', 'CW2_SPRING_BRAKE_PRESSURE_BOGIE2',
+        'MW1_SPRING_BRAKE_PRESSURE_BOGIE1', 'MW1_SPRING_BRAKE_PRESSURE_BOGIE2',
+        'MW2_SPRING_BRAKE_PRESSURE_BOGIE1', 'MW2_SPRING_BRAKE_PRESSURE_BOGIE2',
+        'MW3_SPRING_BRAKE_PRESSURE_BOGIE1', 'MW3_SPRING_BRAKE_PRESSURE_BOGIE2',
+        'MW4_SPRING_BRAKE_PRESSURE_BOGIE1', 'MW4_SPRING_BRAKE_PRESSURE_BOGIE2',
+        # Spring brake active (CW only — not present on MW wagons)
+        'CW1_SPRING_BRAKE_ACTIVE_BOGIE1', 'CW1_SPRING_BRAKE_ACTIVE_BOGIE2',
+        'CW2_SPRING_BRAKE_ACTIVE_BOGIE1', 'CW2_SPRING_BRAKE_ACTIVE_BOGIE2',
+        # Proportional valve pressure (all wagons, both bogies)
+        'CW1_PROPORTIONAL_VALVE_PRESSURE_BOGIE1', 'CW1_PROPORTIONAL_VALVE_PRESSURE_BOGIE2',
+        'CW2_PROPORTIONAL_VALVE_PRESSURE_BOGIE1', 'CW2_PROPORTIONAL_VALVE_PRESSURE_BOGIE2',
+        'MW1_PROPORTIONAL_VALVE_PRESSURE_BOGIE1', 'MW1_PROPORTIONAL_VALVE_PRESSURE_BOGIE2',
+        'MW2_PROPORTIONAL_VALVE_PRESSURE_BOGIE1', 'MW2_PROPORTIONAL_VALVE_PRESSURE_BOGIE2',
+        'MW3_PROPORTIONAL_VALVE_PRESSURE_BOGIE1', 'MW3_PROPORTIONAL_VALVE_PRESSURE_BOGIE2',
+        'MW4_PROPORTIONAL_VALVE_PRESSURE_BOGIE1', 'MW4_PROPORTIONAL_VALVE_PRESSURE_BOGIE2',
+        # Proportional valve pressure available (all wagons, both bogies)
+        'CW1_PROPORTIONAL_VALVE_PRESSURE_AVAILABLE_BOGIE1', 'CW1_PROPORTIONAL_VALVE_PRESSURE_AVAILABLE_BOGIE2',
+        'CW2_PROPORTIONAL_VALVE_PRESSURE_AVAILABLE_BOGIE1', 'CW2_PROPORTIONAL_VALVE_PRESSURE_AVAILABLE_BOGIE2',
+        'MW1_PROPORTIONAL_VALVE_PRESSURE_AVAILABLE_BOGIE1', 'MW1_PROPORTIONAL_VALVE_PRESSURE_AVAILABLE_BOGIE2',
+        'MW2_PROPORTIONAL_VALVE_PRESSURE_AVAILABLE_BOGIE1', 'MW2_PROPORTIONAL_VALVE_PRESSURE_AVAILABLE_BOGIE2',
+        'MW3_PROPORTIONAL_VALVE_PRESSURE_AVAILABLE_BOGIE1', 'MW3_PROPORTIONAL_VALVE_PRESSURE_AVAILABLE_BOGIE2',
+        'MW4_PROPORTIONAL_VALVE_PRESSURE_AVAILABLE_BOGIE1', 'MW4_PROPORTIONAL_VALVE_PRESSURE_AVAILABLE_BOGIE2',
+        # Pneumatic brake active (CW only, no bogie suffix — not present on MW wagons)
+        'CW1_PNEUMATIC_BRAKE_ACTIVE',
+        'CW2_PNEUMATIC_BRAKE_ACTIVE',
+        # Pneumatic braking force (all wagons, both bogies)
+        'CW1_PNEUMATIC_BRAKING_FORCE_BOGIE1', 'CW1_PNEUMATIC_BRAKING_FORCE_BOGIE2',
+        'CW2_PNEUMATIC_BRAKING_FORCE_BOGIE1', 'CW2_PNEUMATIC_BRAKING_FORCE_BOGIE2',
+        'MW1_PNEUMATIC_BRAKING_FORCE_BOGIE1', 'MW1_PNEUMATIC_BRAKING_FORCE_BOGIE2',
+        'MW2_PNEUMATIC_BRAKING_FORCE_BOGIE1', 'MW2_PNEUMATIC_BRAKING_FORCE_BOGIE2',
+        'MW3_PNEUMATIC_BRAKING_FORCE_BOGIE1', 'MW3_PNEUMATIC_BRAKING_FORCE_BOGIE2',
+        'MW4_PNEUMATIC_BRAKING_FORCE_BOGIE1', 'MW4_PNEUMATIC_BRAKING_FORCE_BOGIE2',
+        # Brake control signal
+        'TRAIN_BRAKE_SIGNAL',
+    ],
+    'Leveling': [
+        'CW1_LOAD_PRESSURE_BOGIE1', 'CW1_LOAD_PRESSURE_BOGIE2',
+        'CW2_LOAD_PRESSURE_BOGIE1', 'CW2_LOAD_PRESSURE_BOGIE2',
+        'MW1_LOAD_PRESSURE_BOGIE1', 'MW1_LOAD_PRESSURE_BOGIE2',
+        'MW2_LOAD_PRESSURE_BOGIE1', 'MW2_LOAD_PRESSURE_BOGIE2',
+        'MW3_LOAD_PRESSURE_BOGIE1', 'MW3_LOAD_PRESSURE_BOGIE2',
+        'MW4_LOAD_PRESSURE_BOGIE1', 'MW4_LOAD_PRESSURE_BOGIE2',
+        'CW1_LOAD_SIGNAL', 'CW2_LOAD_SIGNAL',
+        'MW1_LOAD_SIGNAL', 'MW2_LOAD_SIGNAL',
+        'MW3_LOAD_SIGNAL', 'MW4_LOAD_SIGNAL',
+    ],
+    'Traction': [
+        'MW1_ENERGY_BRAKING_RESISTANCE', 'MW2_ENERGY_BRAKING_RESISTANCE',
+        'MW3_ENERGY_BRAKING_RESISTANCE', 'MW4_ENERGY_BRAKING_RESISTANCE',
+    ],
+    'Context': [
+        'TRAIN_SPEED_ACTUAL', 'AMBIENT_TEMPERATURE',
+        'TRAIN_LINE', 'TRAIN_CURRENT_SECTION', 'TRAIN_IS_SPECIAL_SECTION',
+        'TRAIN_MANUAL_MODE', 'TRAIN_AUTOMATIC_MODE', 'TRAIN_EMERGENCY_MODE',
+    ],
+}
+
+ALL_SENSOR_COLS = [s for sensors in SUBSYSTEMS.values() for s in sensors]
+
+# ── Window & label parameters (from RAMS 2026 / Helm thesis) ─────────────────
+WINDOW_SIZES_MIN = [6, 11.5, 23]       # candidate window sizes in minutes
+LABEL_HORIZONS_H = [0.0, 3.1, 6.2]    # failure label look-ahead in hours
+
+# Default best config (from Helm thesis ablation)
+DEFAULT_WINDOW_MIN = 6
+DEFAULT_HORIZON_H  = 6.2
+
+# ── Train / test split boundary ───────────────────────────────────────────────
+SPLIT_DATE = '2025-02-12'
