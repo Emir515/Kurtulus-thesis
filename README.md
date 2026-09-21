@@ -20,7 +20,6 @@ Does organizing sensor features by subsystem (Brake, APU, Leveling, Traction) �
 | Total rows | ~22.2M (14.3M train + 7.9M test) |
 | Total columns | 109 (101 sensor cols + 8 meta/label cols) |
 | Format | Apache Parquet, partitioned by year/month/day |
-| Missing values | 0 in all 101 sensor columns |
 
 **Sensor subsystems (101 sensors):**
 | Subsystem | Count | Description |
@@ -51,9 +50,9 @@ Dataset source: https://researchdata.tuwien.ac.at/records/9ja0q-bq581
 
 ---
 
-## Baseline Results (Helm 2025)
+## Baseline Results (Steiner RAMS 2026 / Helm 2025)
 
-Prior work by Stefan Helm (TU Wien, Oct 2025) evaluated two models on MetroAT:
+Prior work by Stefan Helm (TU Wien) evaluated two models on MetroAT:
 
 | Model | Dev F1 | Test F1 | Main weakness |
 |-------|--------|---------|---------------|
@@ -62,25 +61,50 @@ Prior work by Stefan Helm (TU Wien, Oct 2025) evaluated two models on MetroAT:
 
 ---
 
-## Key Exploration Findings
+## Generated Datasets
 
-Confirmed in `notebooks/01_data_exploration.ipynb`:
+**Supervised** (9 configs) — `outputs/supervised_datasets/` (453 MB)
+- 3 window sizes (6m/350s, 11m/701s, 23m/1402s) x 3 label horizons (no_shift, 3.1h, 6.2h)
+- 344 features per window: analog (min/max/mean/sum) + binary (active_s/flips) + 2 asset features
+- Format: train.parquet + test.parquet per config
 
-- **Precursor signals exist:** 18/20 event-sensor pairs show variance spikes 8x-656x above baseline, median 4.5h before failure onset
+**Unsupervised** (9 configs) — `outputs/unsupervised_datasets/` (71 GB)
+- Same 3x3 grid, raw multivariate sequences as .npy arrays
+- Shape: (n_windows, seq_len, 98 channels), float32
+- Splits: train (normal-only), val (normal-only), dev_eval (all), test (all)
+- Z-score standardized using train-normal statistics only
+
+---
+
+## Key Findings
+
+### Data Exploration (NB01)
+
+- **Precursor signals exist:** variance spikes detected before all 21 failure events, median lead time 5.1h
 - **Subsystem structure is real:** within-subsystem correlation is 3-6x higher than cross-subsystem
 - **Window sizes are valid:** tau_corr = 92s median; all candidate windows (6/11.5/23 min) produce independent observations
-- **4 failure-maintenance overlaps:** ~20% of failure events overlap with maintenance periods (data quality consideration)
+- **Steiner baseline:** RF predicts P(failure) = 0.15-0.60 for above-threshold windows, but almost all are false positives (F1=0.21)
 
-**Anomaly analysis findings** (`notebooks/02_anomaly_analysis.ipynb`):
+### Anomaly Analysis (NB02)
 
-- **Only 36/101 sensors (36%) show reliable precursor signals** — the rest are binary flags, constant values, or weak responders
-- **4 data-driven clusters** found via hierarchical clustering on variance ratio profiles:
-  - C3 (11 sensors): pure Brake (spring brake pressure), 100% detection rate, 250-618x variance ratio
-  - C4 (9 sensors): cross-subsystem early warning (APU + Leveling + Brake + Traction), 94% detection rate
-  - C2 (35 sensors): moderate signal, 34% detection rate
-  - C1 (46 sensors): noise, 16% detection rate
-- **BOGIE1 vs BOGIE2 asymmetry:** CW brake sensors on BOGIE1 show 100% detection, BOGIE2 only 11%
-- **Subsystem grouping is partially validated:** Cluster 3 is 100% pure Brake, but Cluster 4 crosses subsystem boundaries through the shared pneumatic system
+- Z-score thresholding (|z| > 2.0) on windowed features relative to normal-operation statistics
+- 70.7% of windows have at least 1 activated sensor; avg 10.2 sensors activated per window
+- 96% of pre-failure windows are anomalous (498/518), confirming detectable patterns exist
+
+### Clustering & Temporal Patterns (NB03 — Phase 1)
+
+Hierarchical clustering (Jaccard distance + Ward linkage) on binary activation matrix:
+
+| Cluster | Sensors | Subsystem | Failure Rate | Interpretation |
+|---------|---------|-----------|-------------|----------------|
+| C1 | 37 | Brake (valves + forces) | 3.8% | Strongest failure precursor |
+| C2 | 12 | Brake (spring brakes) | 1.5% | Spring brake anomalies |
+| C3 | 4 | Leveling | 0.5% | Operational patterns |
+| C4 | 0 | Mixed/unclustered | 1.8% | Isolated anomalies |
+
+- C1 appears within 0-2h before most failures (strongest precursor)
+- Test set validation confirms patterns generalize
+- Cluster definitions saved to `outputs/cluster_definitions.json` for Phase 2
 
 ---
 
@@ -94,25 +118,28 @@ Kurtulus-thesis/
 │   └── asset_data/                 # External asset records
 │       ├── failure.csv             # 41 failure records
 │       ├── revision.csv            # 21 maintenance/revision events
-│       ├── relevant_sensors.json   # Stefan's 95-sensor selection
 │       ├── port_name_mapping.json  # Port-to-column name mapping
+│       ├── relevant_sensors.json   # Sensor selection reference
 │       ├── stationsinformation.csv
 │       └── train_order.csv
 ├── notebooks/
-│   ├── 01_data_exploration.ipynb   # Full EDA (dataset overview, failure events, precursors, correlations)
-│   └── 02_anomaly_analysis.ipynb   # Sensor ranking, clustering, subsystem validation
+│   ├── 01_data_exploration.ipynb   # Full EDA: timelines, sensor plots, precursors, correlations
+│   ├── 02_anomaly_analysis.ipynb   # Z-score anomaly detection, activation matrix
+│   └── 03_clustering_temporal_analysis.ipynb  # Phase 1: clustering, temporal patterns, test validation
 ├── scripts/
-│   └── build_features.py           # Window-based feature extraction pipeline
+│   ├── create_supervised_datasets.py    # Windowed features -> parquet (9 configs)
+│   └── create_unsupervised_datasets.py  # Raw sequences -> .npy (9 configs)
 ├── src/
 │   ├── config.py                   # Central paths, sensor schema, hyperparams
-│   ├── features.py                 # Feature extraction functions (per-sensor + group-level)
 │   └── __init__.py
 ├── references/
 │   └── stefan/                     # Prior work scripts and predictions (Helm 2025)
 ├── Papers/                         # Reference literature
 ├── outputs/
-│   ├── plots/                      # Generated figures
-│   └── sensor_clusters.csv         # Cluster assignments for all 101 sensors
+│   ├── supervised_datasets/        # 9 configs, train/test parquets (453 MB)
+│   ├── unsupervised_datasets/      # 9 configs, .npy + .csv (71 GB)
+│   ├── plots/                      # Generated figures from NB03
+│   └── cluster_definitions.json    # Cluster sensor lists for Phase 2
 ├── requirements.txt
 └── README.md
 ```
@@ -121,9 +148,10 @@ Kurtulus-thesis/
 
 ## Methodology
 
-1. **Data Exploration** ✅ — dataset structure, failure events, precursor analysis, subsystem correlations
-2. **Anomaly Analysis & Clustering** ✅ — precursor strength for all 101 sensors, hierarchical clustering, subsystem validation
-3. **Feature Engineering & Modeling** — build flat vs. subsystem-aware feature sets, train RF, compare performance (next)
+1. **Data Exploration** -- dataset structure, failure events, full-timeline sensor analysis, precursor detection
+2. **Dataset Creation** -- supervised (windowed features) and unsupervised (raw sequences) for 9 window/horizon configs
+3. **Anomaly Analysis & Clustering (Phase 1 - RQ1)** -- z-score anomaly detection, hierarchical clustering, temporal pattern analysis, cluster definitions for subsystem-aware representations
+4. **Modeling & Evaluation (Phase 2 - RQ2)** -- train supervised (RF, GBM) and unsupervised (LSTM-AE) models on full-feature vs subsystem-aware representations, controlled comparison (next)
 
 ---
 
@@ -137,4 +165,4 @@ pip install -r requirements.txt
 jupyter notebook notebooks/01_data_exploration.ipynb
 ```
 
-**Note:** The `train/` and `test/` folders are not in version control (large binary files). All paths are configured in `src/config.py`.
+**Note:** The `train/` and `test/` folders are not in version control (large binary files). The `outputs/` directory is also gitignored. All paths are configured in `src/config.py`.
