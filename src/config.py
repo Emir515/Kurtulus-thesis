@@ -17,12 +17,10 @@ TRAIN_GLOB_PORTABLE = r'C:\Users\Em*\Desktop\MASTER THESIS\Kurtulus-thesis\train
 TEST_GLOB_PORTABLE  = r'C:\Users\Em*\Desktop\MASTER THESIS\Kurtulus-thesis\test\**\*.parquet'
 
 # ── Outputs ───────────────────────────────────────────────────────────────────
-OUT_DIR      = ROOT / 'outputs'
-PLOTS_DIR    = OUT_DIR / 'plots'
-FEATURES_DIR = OUT_DIR / 'features'
-MODELS_DIR   = OUT_DIR / 'models'
+OUT_DIR   = ROOT / 'outputs'
+PLOTS_DIR = OUT_DIR / 'plots'
 
-for _d in [PLOTS_DIR, FEATURES_DIR, MODELS_DIR]:
+for _d in [PLOTS_DIR]:
     _d.mkdir(parents=True, exist_ok=True)
 
 # ── Sensor subsystem schema ───────────────────────────────────────────────────
