@@ -59,20 +59,31 @@ Prior work by Stefan Helm (TU Wien) evaluated two models on MetroAT:
 | Random Forest (flat features) | 0.98 | **0.21** | Overfits to `days_since_last_failure` |
 | LSTM-AE (unsupervised) | 0.75 | **0.08** | Recall=0.92 but Precision=0.04 |
 
+Re-evaluation of Steiner's RF test predictions: F1=0.25, P=0.14, R=1.00, FAR=1.00 (predicts all windows as failure).
+
 ---
 
 ## Generated Datasets
 
-**Supervised** (9 configs) — `outputs/supervised_datasets/` (453 MB)
-- 3 window sizes (6m/350s, 11m/701s, 23m/1402s) x 3 label horizons (no_shift, 3.1h, 6.2h)
-- 344 features per window: analog (min/max/mean/sum) + binary (active_s/flips) + 2 asset features
-- Format: train.parquet + test.parquet per config
+**Supervised** — `outputs/supervised/`
+- Best baseline config: Wfeat=350s (6 min), Wlabel=22326s (6.2h)
+- Train: 41,364 windows (530 failure, 1.28%) | Test: 23,134 windows (667 failure, 2.88%)
+- 340 features: 296 analog (74 sensors x min/max/mean/sum) + 42 binary (21 sensors x active_s/flips) + 2 asset (days_since_last_failure, days_since_last_revision)
+- Format: train.parquet + test.parquet
 
-**Unsupervised** (9 configs) — `outputs/unsupervised_datasets/` (71 GB)
-- Same 3x3 grid, raw multivariate sequences as .npy arrays
-- Shape: (n_windows, seq_len, 98 channels), float32
-- Splits: train (normal-only), val (normal-only), dev_eval (all), test (all)
-- Z-score standardized using train-normal statistics only
+**Unsupervised** — `outputs/unsupervised/`
+- Best baseline config: Wseq=1402s (23 min), Wlabel=11163s (3.1h)
+- 95 channels, z-score standardized using train-normal statistics
+- Splits:
+
+| Split | Shape | Type |
+|-------|-------|------|
+| train | 6,272 x 1,402 x 95 | normal-only |
+| val | 1,568 x 1,402 x 95 | normal-only |
+| dev_eval | 1,975 x 1,402 x 95 | all (8 failure) |
+| test | 5,374 x 1,402 x 95 | all (46 failure) |
+
+- Format: .npy arrays (float32) + metadata.json
 
 ---
 
@@ -85,26 +96,22 @@ Prior work by Stefan Helm (TU Wien) evaluated two models on MetroAT:
 - **Window sizes are valid:** tau_corr = 92s median; all candidate windows (6/11.5/23 min) produce independent observations
 - **Steiner baseline:** RF predicts P(failure) = 0.15-0.60 for above-threshold windows, but almost all are false positives (F1=0.21)
 
-### Anomaly Analysis (NB02)
+### Dataset Creation (NB02)
 
-- Z-score thresholding (|z| > 2.0) on windowed features relative to normal-operation statistics
-- 70.7% of windows have at least 1 activated sensor; avg 10.2 sensors activated per window
-- 96% of pre-failure windows are anomalous (498/518), confirming detectable patterns exist
+- Reproduces Steiner's exact pipeline: epoch-aligned windowing, maintenance filtering, analog/binary feature aggregation, asset lookback computation, shifted failure labels with filter rule
+- Sequential processing (train then test) to stay within memory limits (~16 GB)
+- Asset lookback timestamps chained from train to test for continuity
 
-### Clustering & Temporal Patterns (NB03 — Phase 1)
+### Dataset Analysis (NB03)
 
-Hierarchical clustering (Jaccard distance + Ward linkage) on binary activation matrix:
-
-| Cluster | Sensors | Subsystem | Failure Rate | Interpretation |
-|---------|---------|-----------|-------------|----------------|
-| C1 | 37 | Brake (valves + forces) | 3.8% | Strongest failure precursor |
-| C2 | 12 | Brake (spring brakes) | 1.5% | Spring brake anomalies |
-| C3 | 4 | Leveling | 0.5% | Operational patterns |
-| C4 | 0 | Mixed/unclustered | 1.8% | Isolated anomalies |
-
-- C1 appears within 0-2h before most failures (strongest precursor)
-- Test set validation confirms patterns generalize
-- Cluster definitions saved to `outputs/cluster_definitions.json` for Phase 2
+- **Most discriminative subsystems** (Cohen's d, normal vs failure):
+  - Brake: mean d=0.747, 203/230 features with d>0.3 (strongest)
+  - Leveling: mean d=0.622, top single feature (MW4_LOAD_PRESSURE d=1.46)
+  - Context: mean d=0.651 (TRAIN_SPEED_ACTUAL d=1.31)
+  - APU/Traction/Asset: weak discriminative power (d<0.25)
+- **Within-subsystem correlation** drops during failure (Brake: 0.79 normal -> 0.44 failure), suggesting failure disrupts normal co-variation patterns
+- **Standardization verified:** z-score channels well-centered; 4 Traction channels near-constant (low variance)
+- **Temporal coverage:** ~177 windows/day, median gap = 350s (one window width), 360/210 operational breaks (>1h) in train/test
 
 ---
 
@@ -124,11 +131,8 @@ Kurtulus-thesis/
 │       └── train_order.csv
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb   # Full EDA: timelines, sensor plots, precursors, correlations
-│   ├── 02_anomaly_analysis.ipynb   # Z-score anomaly detection, activation matrix
-│   └── 03_clustering_temporal_analysis.ipynb  # Phase 1: clustering, temporal patterns, test validation
-├── scripts/
-│   ├── create_supervised_datasets.py    # Windowed features -> parquet (9 configs)
-│   └── create_unsupervised_datasets.py  # Raw sequences -> .npy (9 configs)
+│   ├── 02_dataset_creation.ipynb   # Supervised & unsupervised dataset creation (Steiner baseline)
+│   └── 03_dataset_analysis.ipynb   # Dataset validation, feature analysis, subsystem comparison
 ├── src/
 │   ├── config.py                   # Central paths, sensor schema, hyperparams
 │   └── __init__.py
@@ -136,10 +140,8 @@ Kurtulus-thesis/
 │   └── stefan/                     # Prior work scripts and predictions (Helm 2025)
 ├── Papers/                         # Reference literature
 ├── outputs/
-│   ├── supervised_datasets/        # 9 configs, train/test parquets (453 MB)
-│   ├── unsupervised_datasets/      # 9 configs, .npy + .csv (71 GB)
-│   ├── plots/                      # Generated figures from NB03
-│   └── cluster_definitions.json    # Cluster sensor lists for Phase 2
+│   ├── supervised/                 # train.parquet, test.parquet
+│   └── unsupervised/              # .npy arrays, labels, metadata.json
 ├── requirements.txt
 └── README.md
 ```
@@ -148,10 +150,10 @@ Kurtulus-thesis/
 
 ## Methodology
 
-1. **Data Exploration** -- dataset structure, failure events, full-timeline sensor analysis, precursor detection
-2. **Dataset Creation** -- supervised (windowed features) and unsupervised (raw sequences) for 9 window/horizon configs
-3. **Anomaly Analysis & Clustering (Phase 1 - RQ1)** -- z-score anomaly detection, hierarchical clustering, temporal pattern analysis, cluster definitions for subsystem-aware representations
-4. **Modeling & Evaluation (Phase 2 - RQ2)** -- train supervised (RF, GBM) and unsupervised (LSTM-AE) models on full-feature vs subsystem-aware representations, controlled comparison (next)
+1. **Data Exploration (NB01)** — dataset structure, failure events, full-timeline sensor analysis, precursor detection
+2. **Dataset Creation (NB02)** — supervised (windowed features) and unsupervised (raw sequences) matching Steiner's best baseline configs
+3. **Dataset Analysis (NB03)** — validation against Steiner's predictions, feature discriminability by subsystem, standardization checks
+4. **Modeling & Evaluation (Phase 2)** — train supervised (RF, GBM) and unsupervised (LSTM-AE) models on flat vs subsystem-aware representations, controlled comparison (next)
 
 ---
 
