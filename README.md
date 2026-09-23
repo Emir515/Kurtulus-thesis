@@ -115,16 +115,20 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 - Both models predict on ALL test windows — no threshold filtering applied
 - Sequential processing (train then test) to stay within memory limits (~16 GB)
 
-### Dataset Analysis (NB03)
+### Dataset Analysis — Full Period (NB03)
 
-- **Most discriminative subsystems** (Cohen's d, normal vs failure):
-  - Brake: mean d=0.747, 203/230 features with d>0.3 (strongest)
-  - Leveling: mean d=0.622, top single feature (MW4_LOAD_PRESSURE d=1.46)
-  - Context: mean d=0.651 (TRAIN_SPEED_ACTUAL d=1.31)
-  - APU/Traction/Asset: weak discriminative power (d<0.25)
-- **Within-subsystem correlation** drops during failure (Brake: 0.79 normal -> 0.44 failure), suggesting failure disrupts normal co-variation patterns
-- **Standardization verified:** z-score channels well-centered; 4 Traction channels near-constant (low variance)
-- **Temporal coverage:** ~177 windows/day, median gap = 350s (one window width), 360/210 operational breaks (>1h) in train/test
+- **Anomaly hotspots (full period):** RF detects 186 sustained high-score clusters across Jun 2024 – Jun 2025; only 27 overlap with labeled failures, 159 have no labeled failure (potential false alarms or unlabeled degradation)
+- **LSTM-AE distribution shift:** train mean reconstruction error = 0.539, test mean = 0.774 — the test period looks systematically "less normal," suggesting concept drift or gradual degradation
+- **Score stability:** RF probability distribution is similar across train/test (mean 0.061 vs 0.064); LSTM-AE shows clear shift
+- **Most discriminative subsystems** (Cohen's d, normal vs failure, full period):
+  - Brake: mean d=0.655, 206/230 features with d>0.3 (strongest)
+  - Leveling: mean d=0.552, 51/72 features with d>0.3
+  - Context: mean d=0.388 (TRAIN_SPEED_ACTUAL d=0.99)
+  - APU: mean d=0.290 | Traction: mean d=0.205 | Asset: weak (d<0.10)
+- **Within-subsystem correlation** drops during failure (Brake: 0.58 → 0.44, Traction: 0.74 → 0.52), suggesting failure disrupts normal co-variation patterns
+- **Within vs cross-subsystem:** within-subsystem correlation is 2.4x higher than cross-subsystem (0.567 vs 0.236)
+- **Standardization:** z-score channels mostly well-centered; 4 Traction channels and several Leveling channels have mean far from 0 (near-constant or skewed distributions)
+- **Temporal coverage:** ~178 windows/day, median gap = 350s (one window width), 571 operational breaks (>1h) across full period
 
 ---
 
@@ -145,7 +149,7 @@ Kurtulus-thesis/
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb   # Full EDA: timelines, sensor plots, precursors, correlations
 │   ├── 02_anomaly_dataset_creation.ipynb  # Supervised & unsupervised pipeline + RF & LSTM-AE
-│   └── 03_dataset_analysis.ipynb   # Dataset validation, feature analysis, subsystem comparison
+│   └── 03_dataset_analysis.ipynb   # Full-period analysis: hotspots, distributions, subsystem discriminability
 ├── scripts/
 │   └── plot_full_timeline.py       # Generate full-period anomaly timeline plot
 ├── src/
@@ -169,7 +173,7 @@ Kurtulus-thesis/
 
 1. **Data Exploration (NB01)** — dataset structure, failure events, full-timeline sensor analysis, precursor detection
 2. **Anomaly Dataset Creation (NB02)** — supervised (windowed features + RF) and unsupervised (raw sequences + LSTM-AE) matching Steiner's best baseline configs, predict on all test windows
-3. **Dataset Analysis (NB03)** — validation against Steiner's predictions, feature discriminability by subsystem, standardization checks
+3. **Dataset Analysis (NB03)** — full-period anomaly timeline, score distributions (train vs test), hotspot detection, subsystem discriminability (Cohen's d), correlation analysis, standardization checks, temporal coverage
 4. **Modeling & Evaluation (Phase 2)** — train supervised (RF, GBM) and unsupervised (LSTM-AE) models on flat vs subsystem-aware representations, controlled comparison (next)
 
 ---
