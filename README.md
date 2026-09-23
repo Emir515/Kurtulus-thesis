@@ -50,40 +50,51 @@ Dataset source: https://researchdata.tuwien.ac.at/records/9ja0q-bq581
 
 ---
 
-## Baseline Results (Steiner RAMS 2026 / Helm 2025)
+## Baseline Results
 
-Prior work by Stefan Helm (TU Wien) evaluated two models on MetroAT:
+### Steiner (RAMS 2026 / Helm 2025)
 
 | Model | Dev F1 | Test F1 | Main weakness |
 |-------|--------|---------|---------------|
 | Random Forest (flat features) | 0.98 | **0.21** | Overfits to `days_since_last_failure` |
 | LSTM-AE (unsupervised) | 0.75 | **0.08** | Recall=0.92 but Precision=0.04 |
 
-Re-evaluation of Steiner's RF test predictions: F1=0.25, P=0.14, R=1.00, FAR=1.00 (predicts all windows as failure).
+### Our Reproduction (NB02)
+
+Using Steiner's best hyperparameters (n_estimators=300, max_depth=4, threshold=0.20):
+
+| Model | Test Windows | True Failures | Predicted | F1 | P | R | FAR |
+|-------|-------------|---------------|-----------|-----|------|------|------|
+| Random Forest | 23,147 | 669 | 879 | 0.120 | 0.106 | 0.139 | 3.5% |
+| LSTM-AE | 5,374 seq | 46 | — | — | — | — | — |
+
+LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
+
+**Full-period anomaly timeline (Jun 2024 – Jun 2025):**
+
+![Anomaly Timeline](outputs/anomaly_timeline_full.png)
 
 ---
 
 ## Generated Datasets
 
 **Supervised** — `outputs/supervised/`
-- Best baseline config: Wfeat=350s (6 min), Wlabel=22326s (6.2h)
-- Train: 41,364 windows (530 failure, 1.28%) | Test: 23,134 windows (667 failure, 2.88%)
-- 340 features: 296 analog (74 sensors x min/max/mean/sum) + 42 binary (21 sensors x active_s/flips) + 2 asset (days_since_last_failure, days_since_last_revision)
-- Format: train.parquet + test.parquet
+- Config: Wfeat=350s (6 min), Wlabel=22326s (6.2h), Steiner's best RF params
+- Train: 41,375 windows (530 failure, 1.28%) | Test: 23,147 windows (669 failure, 2.89%)
+- 340 features: 296 analog (74 sensors x min/max/mean/sum) + 42 binary (21 sensors x active_s/flips) + 2 asset lookback
+- Output files: `train.parquet`, `test.parquet`, `test_predictions_rf.csv`, `rf_model.joblib`
 
 **Unsupervised** — `outputs/unsupervised/`
-- Best baseline config: Wseq=1402s (23 min), Wlabel=11163s (3.1h)
-- 95 channels, z-score standardized using train-normal statistics
-- Splits:
+- Config: Wseq=1402s (23 min), 4x temporal subsampling → 350 timesteps, z-score normalized
+- 95 channels, LSTM-AE hidden_dim=64, 10 epochs
 
 | Split | Shape | Type |
 |-------|-------|------|
-| train | 6,272 x 1,402 x 95 | normal-only |
-| val | 1,568 x 1,402 x 95 | normal-only |
-| dev_eval | 1,975 x 1,402 x 95 | all (8 failure) |
-| test | 5,374 x 1,402 x 95 | all (46 failure) |
+| train | 7,845 x 350 x 95 | normal-only |
+| val | 1,962 x 350 x 95 | normal-only |
+| test | 5,374 x 350 x 95 | all (46 failure) |
 
-- Format: .npy arrays (float32) + metadata.json
+- Output files: `.npy` arrays, `metadata.json`, `lstm_ae_model.pt`, `test_predictions_lstmae.csv`
 
 ---
 
@@ -96,11 +107,13 @@ Re-evaluation of Steiner's RF test predictions: F1=0.25, P=0.14, R=1.00, FAR=1.0
 - **Window sizes are valid:** tau_corr = 92s median; all candidate windows (6/11.5/23 min) produce independent observations
 - **Steiner baseline:** RF predicts P(failure) = 0.15-0.60 for above-threshold windows, but almost all are false positives (F1=0.21)
 
-### Dataset Creation (NB02)
+### Dataset Creation & Anomaly Detection (NB02)
 
 - Reproduces Steiner's exact pipeline: epoch-aligned windowing, maintenance filtering, analog/binary feature aggregation, asset lookback computation, shifted failure labels with filter rule
+- RF trained with Steiner's best params (no grid search), threshold tuned on 20% temporal holdout
+- LSTM-AE trained on normal-only train sequences (10 epochs, CPU)
+- Both models predict on ALL test windows — no threshold filtering applied
 - Sequential processing (train then test) to stay within memory limits (~16 GB)
-- Asset lookback timestamps chained from train to test for continuity
 
 ### Dataset Analysis (NB03)
 
@@ -131,8 +144,10 @@ Kurtulus-thesis/
 │       └── train_order.csv
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb   # Full EDA: timelines, sensor plots, precursors, correlations
-│   ├── 02_dataset_creation.ipynb   # Supervised & unsupervised dataset creation (Steiner baseline)
+│   ├── 02_anomaly_dataset_creation.ipynb  # Supervised & unsupervised pipeline + RF & LSTM-AE
 │   └── 03_dataset_analysis.ipynb   # Dataset validation, feature analysis, subsystem comparison
+├── scripts/
+│   └── plot_full_timeline.py       # Generate full-period anomaly timeline plot
 ├── src/
 │   ├── config.py                   # Central paths, sensor schema, hyperparams
 │   └── __init__.py
@@ -140,8 +155,10 @@ Kurtulus-thesis/
 │   └── stefan/                     # Prior work scripts and predictions (Helm 2025)
 ├── Papers/                         # Reference literature
 ├── outputs/
-│   ├── supervised/                 # train.parquet, test.parquet
-│   └── unsupervised/              # .npy arrays, labels, metadata.json
+│   ├── supervised/                 # train.parquet, test.parquet, rf_model, predictions
+│   ├── unsupervised/              # .npy arrays, lstm_ae_model, predictions
+│   ├── anomaly_timeline_full.png  # Full-period anomaly timeline
+│   └── anomaly_dataset_summary.json
 ├── requirements.txt
 └── README.md
 ```
@@ -151,7 +168,7 @@ Kurtulus-thesis/
 ## Methodology
 
 1. **Data Exploration (NB01)** — dataset structure, failure events, full-timeline sensor analysis, precursor detection
-2. **Dataset Creation (NB02)** — supervised (windowed features) and unsupervised (raw sequences) matching Steiner's best baseline configs
+2. **Anomaly Dataset Creation (NB02)** — supervised (windowed features + RF) and unsupervised (raw sequences + LSTM-AE) matching Steiner's best baseline configs, predict on all test windows
 3. **Dataset Analysis (NB03)** — validation against Steiner's predictions, feature discriminability by subsystem, standardization checks
 4. **Modeling & Evaluation (Phase 2)** — train supervised (RF, GBM) and unsupervised (LSTM-AE) models on flat vs subsystem-aware representations, controlled comparison (next)
 
