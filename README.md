@@ -130,6 +130,16 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 - **Standardization:** z-score channels mostly well-centered; 4 Traction channels and several Leveling channels have mean far from 0 (near-constant or skewed distributions)
 - **Temporal coverage:** ~178 windows/day, median gap = 350s (one window width), 571 operational breaks (>1h) across full period
 
+### Anomaly Pattern Discovery (NB04)
+
+- **Anomalous windows:** 13,125 / 64,522 (20.3%) identified via z-score (|z|>3, ≥5 features activated per window)
+- **Feature activation:** Brake subsystem present in 75.2% of anomalous windows (mean 9.9 features), Leveling in 64.6%, Traction in 38.1%, APU in 19.7%
+- **Clustering:** Jaccard distance + average linkage at cut=0.75 → 54 valid clusters (≥5 windows each), 53 feature groups constructed
+- **Failure linkage:** 410 anomalous windows occur during failures, 344 are precursors, 12,371 have no failure label
+- **High-purity clusters:** C14 (100% failure, 12 windows, Brake+Leveling+APU), C72 (91% failure, 22 windows, Brake+Leveling), C36 (39% failure, 69 windows)
+- **Large clusters:** C69 (2,289 windows, Traction-only, 2% failure), C8 (2,405 windows, Brake+Leveling, 4% failure), C19 (1,525 windows, all 4 subsystems, 7% failure)
+- **Next step:** Consolidate 54 clusters into ~5-8 high-level anomaly patterns for expert discussion
+
 ---
 
 ## Project Structure
@@ -149,7 +159,8 @@ Kurtulus-thesis/
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb   # Full EDA: timelines, sensor plots, precursors, correlations
 │   ├── 02_anomaly_dataset_creation.ipynb  # Supervised & unsupervised pipeline + RF & LSTM-AE
-│   └── 03_dataset_analysis.ipynb   # Full-period analysis: hotspots, distributions, subsystem discriminability
+│   ├── 03_dataset_analysis.ipynb   # Full-period analysis: hotspots, distributions, subsystem discriminability
+│   └── 04_anomaly_pattern_discovery.ipynb  # Anomaly clustering, feature groups, failure linkage
 ├── scripts/
 │   └── plot_full_timeline.py       # Generate full-period anomaly timeline plot
 ├── src/
@@ -162,6 +173,8 @@ Kurtulus-thesis/
 │   ├── supervised/                 # train.parquet, test.parquet, rf_model, predictions
 │   ├── unsupervised/              # .npy arrays, lstm_ae_model, predictions
 │   ├── anomaly_timeline_full.png  # Full-period anomaly timeline
+│   ├── anomaly_clusters_timeline.png  # Cluster timeline visualization
+│   ├── feature_groups.json        # Subsystem-aware feature groups from clustering
 │   └── anomaly_dataset_summary.json
 ├── requirements.txt
 └── README.md
@@ -174,7 +187,8 @@ Kurtulus-thesis/
 1. **Data Exploration (NB01)** — dataset structure, failure events, full-timeline sensor analysis, precursor detection
 2. **Anomaly Dataset Creation (NB02)** — supervised (windowed features + RF) and unsupervised (raw sequences + LSTM-AE) matching Steiner's best baseline configs, predict on all test windows
 3. **Dataset Analysis (NB03)** — full-period anomaly timeline, score distributions (train vs test), hotspot detection, subsystem discriminability (Cohen's d), correlation analysis, standardization checks, temporal coverage
-4. **Modeling & Evaluation (Phase 2)** — train supervised (RF, GBM) and unsupervised (LSTM-AE) models on flat vs subsystem-aware representations, controlled comparison (next)
+4. **Anomaly Pattern Discovery (NB04)** — z-score anomaly detection, feature activation profiles, hierarchical clustering (Jaccard), failure event linkage, subsystem-aware feature group construction
+5. **Modeling & Evaluation (Phase 2)** — train supervised (RF, GBM) and unsupervised (LSTM-AE) models on flat vs subsystem-aware representations, controlled comparison (next)
 
 ---
 
