@@ -76,28 +76,6 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 
 ---
 
-## Generated Datasets
-
-**Supervised** — `outputs/supervised/`
-- Config: Wfeat=350s (6 min), Wlabel=22326s (6.2h), Steiner's best RF params
-- Train: 41,375 windows (530 failure, 1.28%) | Test: 23,147 windows (669 failure, 2.89%)
-- 340 features: 296 analog (74 sensors x min/max/mean/sum) + 42 binary (21 sensors x active_s/flips) + 2 asset lookback
-- Output files: `train.parquet`, `test.parquet`, `test_predictions_rf.csv`, `rf_model.joblib`
-
-**Unsupervised** — `outputs/unsupervised/`
-- Config: Wseq=1402s (23 min), 4x temporal subsampling → 350 timesteps, z-score normalized
-- 95 channels, LSTM-AE hidden_dim=64, 10 epochs
-
-| Split | Shape | Type |
-|-------|-------|------|
-| train | 7,845 x 350 x 95 | normal-only |
-| val | 1,962 x 350 x 95 | normal-only |
-| test | 5,374 x 350 x 95 | all (46 failure) |
-
-- Output files: `.npy` arrays, `metadata.json`, `lstm_ae_model.pt`, `test_predictions_lstmae.csv`
-
----
-
 ## Key Findings
 
 ### Data Exploration (NB01)
@@ -130,24 +108,28 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 - **Standardization:** z-score channels mostly well-centered; 4 Traction channels and several Leveling channels have mean far from 0 (near-constant or skewed distributions)
 - **Temporal coverage:** ~178 windows/day, median gap = 350s (one window width), 571 operational breaks (>1h) across full period
 
-### Anomaly Pattern Discovery (NB04)
+### Anomaly Detection & Feature Clustering (NB04)
 
-- **Anomalous windows:** 13,125 / 64,522 (20.3%) identified via z-score (|z|>3, ≥5 features activated per window)
-- **Feature activation:** Brake subsystem present in 75.2% of anomalous windows (mean 9.9 features), Leveling in 64.6%, Traction in 38.1%, APU in 19.7%
-- **Clustering:** Jaccard distance + average linkage at cut=0.75 → 54 valid clusters (≥5 windows each), 53 feature groups constructed
-- **Failure linkage:** 410 anomalous windows occur during failures, 344 are precursors, 12,371 have no failure label
-- **Consolidation:** 54 clusters merged into **6 high-level anomaly patterns** based on dominant subsystem, brake sensor type, and sensor overlap:
+- **Anomalous windows:** 12,022 / 64,522 (18.6%) identified via z-score (|z|>3, ≥5 features activated per window); 724 overlap with failures (6.0%), 11,298 are normal anomalies
+- **Feature activation analysis:** Top 30 most activated features are dominated by brake cylinder pressure; most have failure rates near baseline (4-7%), meaning individual features alone cannot predict failures
+- **Feature clustering (not window clustering):** Jaccard distance + average linkage (t=0.7) on binary co-activation profiles → **31 feature clusters (FC1-FC31)**, 130 features total
+  - 22 multi-feature clusters, 9 single-feature clusters
+  - Single-feature clusters are valid: 8/9 have failure rates above baseline, FC26 reaches 31.8%
+- **Cluster cohesion:** All 22 multi-feature clusters have internal Jaccard similarity > 0.3; mean cohesion = 0.54; 11 clusters > 0.5
+- **Failure day vs normal day validation** (all 23 failure days vs 336 normal days):
+  - FC24 (+28.7pp) and FC28 (+20.0pp) are **failure-specific** — activate far more on failure days
+  - FC4 (+17.6pp) is failure-leaning; 23 clusters are similar; FC30 is normal-leaning
+- **Two failure mechanisms discovered** via variance lead-up analysis (7 days before 18 failure events):
+  - **Gradual degradation (FC28):** MW4_LOAD_SIGNAL_min variance increases 2.84x before failure — a genuine early warning signal detectable 2-3 days ahead
+  - **Sudden shift (FC18, 19, 24, 25, 26):** Variance drops or stays flat — sensors jump to abnormal values without gradual build-up, only detectable at the moment of failure
+- **Heuristic comparison:** Jaccard-based (Heuristic A) vs correlation-based (Heuristic B) clustering produce similar groupings (ARI, NMI, co-membership agreement), validating robustness
+- **Binary vs continuous validation:** Binary activation patterns preserve continuous correlation structure (positive Pearson r between binary cohesion and continuous correlation across clusters)
 
-| Pattern | Description | Windows | Failure% | Sensors |
-|---------|-------------|---------|----------|---------|
-| P1_BrakeCylinder | Brake cylinder & proportional valve pressure | 5,127 | 3.2% | 33 |
-| P2_SpringBrake | Spring brake pressure & braking force | 1,593 | **18.9%** | 47 |
-| P3_FullSystem | Multi-subsystem (APU+Brake+Leveling+Traction) | 1,829 | 7.8% | 62 |
-| P4_Leveling | Load pressure & load signal | 1,813 | 4.0% | 15 |
-| P5_Traction | Energy braking resistance (MW2+MW4) | 2,289 | 2.1% | 2 |
-| P6_APU | Compressor & main reservoir pressure | 406 | 5.2% | 17 |
+### Pattern Discovery & Validation (NB05)
 
-- **Key findings:** P2 (spring brake) has the highest failure linkage (18.9%); P3 contains cluster C14 with 100% failure rate; P5 is test-period dominant and may reflect an operational pattern
+- Links feature clusters to failure events and physical subsystems
+- Expert verification preparation: cluster summaries with top features and statistics
+- Deep dives into critical clusters with raw sensor data
 
 ---
 
@@ -161,7 +143,8 @@ Kurtulus-thesis/
 │   ├── 01_data_exploration.ipynb   # Full EDA: timelines, sensor plots, precursors, correlations
 │   ├── 02_anomaly_dataset_creation.ipynb  # Supervised & unsupervised pipeline + RF & LSTM-AE
 │   ├── 03_dataset_analysis.ipynb   # Full-period analysis: hotspots, distributions, subsystem discriminability
-│   └── 04_anomaly_pattern_discovery.ipynb  # Anomaly clustering, feature groups, failure linkage
+│   ├── 04_anomaly_detection_cluster_analysis.ipynb  # Feature clustering, validation, failure mechanisms
+│   └── 05_pattern_discovery_validation.ipynb  # Cluster-to-subsystem mapping, expert verification
 ├── src/
 │   ├── config.py                   # Central paths, sensor schema, hyperparams
 │   └── __init__.py
@@ -171,14 +154,10 @@ Kurtulus-thesis/
 ├── outputs/
 │   ├── supervised/                 # train.parquet, test.parquet, rf_model, predictions
 │   ├── unsupervised/              # .npy arrays, lstm_ae_model, predictions
-│   ├── anomaly_timeline_full.png       # Full-period anomaly timeline (RF + LSTM-AE)
-│   ├── anomaly_clusters_timeline.png  # 54 clusters timeline visualization
-│   ├── consolidated_patterns_overview.png  # 6 patterns timeline + bar chart
-│   ├── pattern_sensor_heatmap.png     # Sensor membership heatmap per pattern
-│   ├── feature_groups.json            # 53 fine-grained feature groups from clustering
-│   ├── consolidated_patterns.json     # 6 consolidated anomaly patterns
-│   ├── consolidated_sensors_table.csv # Sensor-level table per pattern
-│   └── anomaly_dataset_summary.json
+│   ├── nb04_artifacts/            # Feature clusters, activation matrices, constants
+│   ├── anomaly_timeline_full.png
+│   ├── heuristic_comparison.png
+│   └── binary_vs_continuous_validation.png
 ├── requirements.txt
 └── README.md
 ```
@@ -190,8 +169,9 @@ Kurtulus-thesis/
 1. **Data Exploration (NB01)** — dataset structure, failure events, full-timeline sensor analysis, precursor detection
 2. **Anomaly Dataset Creation (NB02)** — supervised (windowed features + RF) and unsupervised (raw sequences + LSTM-AE) matching Steiner's best baseline configs, predict on all test windows
 3. **Dataset Analysis (NB03)** — full-period anomaly timeline, score distributions (train vs test), hotspot detection, subsystem discriminability (Cohen's d), correlation analysis, standardization checks, temporal coverage
-4. **Anomaly Pattern Discovery (NB04)** — z-score anomaly detection, feature activation profiles, hierarchical clustering (Jaccard), failure event linkage, consolidation into 6 subsystem-aware anomaly patterns, sensor heatmap visualization
-5. **Modeling & Evaluation (Phase 2)** — train supervised (RF, GBM) and unsupervised (LSTM-AE) models on flat vs subsystem-aware representations, controlled comparison (next)
+4. **Anomaly Detection & Feature Clustering (NB04)** — z-score anomaly detection, feature activation profiles, feature clustering via Jaccard distance, failure day vs normal day validation, variance lead-up analysis discovering two failure mechanisms (gradual vs sudden), heuristic comparison, binary vs continuous validation
+5. **Pattern Discovery & Validation (NB05)** — link clusters to failure events and subsystems, prepare expert verification sheets, deep dives with raw sensor data
+6. **Modeling & Evaluation (Phase 2)** — train supervised (RF, GBM) and unsupervised (LSTM-AE) models on flat vs subsystem-aware representations, controlled comparison (next)
 
 ---
 
