@@ -14,6 +14,10 @@ __pycache__/
 # Claude Code
 .claude/
 
+# IDE
+.vscode/
+.idea/
+
 # OS
 .DS_Store
 Thumbs.db
