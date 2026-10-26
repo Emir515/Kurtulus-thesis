@@ -68,11 +68,13 @@ Using Steiner's best hyperparameters (n_estimators=300, max_depth=4, threshold=0
 | Random Forest | 23,147 | 669 | 879 | 0.120 | 0.106 | 0.139 | 3.5% |
 | LSTM-AE | 5,374 seq | 46 | — | — | — | — | — |
 
-LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
+LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation). NB02 does not threshold the LSTM-AE; "F1 ≈ 0.08" is Steiner/Helm's value. NB05 uses the 99th percentile of the validation split (1.123).
+
+> **Open decision (label definition):** NB02 sets label = 1 if a failure overlaps [window_end, window_end + 6.2 h), so all 543 windows *inside* a failure are positive (≈45% of the 1,202 positives). Steiner/Helm use a point-shifted label and drop ambiguous in-failure windows, so our F1 = 0.120 is not directly comparable to their 0.21. In addition, the RF threshold is tuned on an undersampled holdout (10% positives vs 2.9% in test). Fixing either requires re-running NB02, which changes NB03–NB05 and possibly FC1–FC31.
 
 **Full-period anomaly timeline (Jun 2024 – Jun 2025):**
 
-![Anomaly Timeline](outputs/anomaly_timeline_full.png)
+![Anomaly Timeline](outputs/nb03_artifacts/anomaly_timeline_full.png)
 
 ---
 
@@ -80,14 +82,14 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 
 ### Data Exploration (NB01)
 
-- **Precursor signals exist:** variance spikes detected before all 21 failure events, median lead time 5.1h
-- **Subsystem structure is real:** within-subsystem correlation is 3-6x higher than cross-subsystem
-- **Window sizes are valid:** tau_corr = 92s median; all candidate windows (6/11.5/23 min) produce independent observations
-- **Steiner baseline:** RF predicts P(failure) = 0.15-0.60 for above-threshold windows, but almost all are false positives (F1=0.21)
+- **Data:** 22.2M rows at 1 Hz, 101 sensor channels + 8 metadata/flag columns; NB01 loads only the needed columns (the full data set is ~15 GB in memory)
+- **Failures:** 21 events (10 train / 11 test; 13 brake, 6 compressor, 2 leveling), identical to the canonical table in NB04; ~1% (train) / ~1.4% (test) of rows in failure, ~4% in maintenance
+- **During recorded failures** (train, raw 1 Hz values), large shifts in CW1 spring-brake pressure (Cohen's d = −1.5), CW1 main-reservoir pressure (−1.1) and CW1 load pressure (−1.1)
+- **Correlation structure:** within documented sensor groups, mean |r| is clearly higher than across groups (permutation test p = 0.001); within-Brake correlation is partly due to synchronous actuation within a control chain
 
 ### Dataset Creation & Anomaly Detection (NB02)
 
-- Reproduces Steiner's exact pipeline: epoch-aligned windowing, maintenance filtering, analog/binary feature aggregation, asset lookback computation, shifted failure labels with filter rule
+- Follows Steiner's pipeline: epoch-aligned windowing, maintenance filtering, analog/binary feature aggregation, asset lookback computation, 6.2 h failure labels. One difference: in-failure windows are labelled positive, so the filter rule removes nothing (see the open decision above)
 - RF trained with Steiner's best params (no grid search), threshold tuned on 20% temporal holdout
 - LSTM-AE trained on normal-only train sequences (10 epochs, CPU)
 - Both models predict on ALL test windows — no threshold filtering applied
@@ -95,41 +97,43 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 
 ### Dataset Analysis — Full Period (NB03)
 
-- **Anomaly hotspots (full period):** RF detects 186 sustained high-score clusters across Jun 2024 – Jun 2025; only 27 overlap with labeled failures, 159 have no labeled failure (potential false alarms or unlabeled degradation)
-- **LSTM-AE distribution shift:** train mean reconstruction error = 0.539, test mean = 0.774 — the test period looks systematically "less normal," suggesting concept drift or gradual degradation
-- **Score stability:** RF probability distribution is similar across train/test (mean 0.061 vs 0.064); LSTM-AE shows clear shift
-- **Most discriminative subsystems** (Cohen's d, normal vs failure, full period):
-  - Brake: mean d=0.655, 206/230 features with d>0.3 (strongest)
-  - Leveling: mean d=0.552, 51/72 features with d>0.3
-  - Context: mean d=0.388 (TRAIN_SPEED_ACTUAL d=0.99)
-  - APU: mean d=0.290 | Traction: mean d=0.205 | Asset: weak (d<0.10)
-- **Within-subsystem correlation** drops during failure (Brake: 0.58 → 0.44, Traction: 0.74 → 0.52), suggesting failure disrupts normal co-variation patterns
-- **Within vs cross-subsystem:** within-subsystem correlation is 2.4x higher than cross-subsystem (0.567 vs 0.236)
-- **Standardization:** z-score channels mostly well-centered; 4 Traction channels and several Leveling channels have mean far from 0 (near-constant or skewed distributions)
+- **Train/test shift:** LSTM-AE reconstruction error is 0.539 (train) vs 0.774 (test) and rises from ~April 2025, consistent with the baseline shift in RAMS 2026. Pooled train+test comparisons are therefore confounded, because failure windows are concentrated in the test period.
+- **RF scores on the train period are in-sample** (the RF was fit on train), so the train-vs-test comparison of RF probabilities (3.43% vs 3.80% above threshold) and hotspots (124 vs 62) is not like-for-like.
+- **Anomaly hotspots:** RF finds 186 sustained high-score clusters, 27 overlapping labelled failures. LSTM-AE (train-period p90 threshold) finds 554, only 10 with failures, most of them in the drifting test period.
+- **Discriminability per documented sensor group, computed per period** (robust d = min(d_train, d_test)): 234/340 features have robust d > 0.3 (pooled: 268, inflated by drift). Mean robust d is Brake 0.50, Context 0.34, Leveling 0.31, energy-braking resistance 0.17, APU 0.16.
+- **Within vs cross-group correlation** (same-sensor aggregation pairs excluded): 0.565 vs 0.236 (2.4×). Within-group correlation drops during failures in train (e.g. Brake 0.61 → 0.37) but much less in test (0.54 → 0.51).
+- **Aggregation redundancy:** mean vs sum mean |r| = 0.89 (median 0.97), so dropping `_sum` in NB04 is a simplification. active_s vs flips are only moderately correlated (keep both).
+- **Standardization:** with a sample spread over the train period, all LSTM-AE channels are well standardised (overall mean −0.01, std 0.98). The earlier "12 channels off-centre" came from sampling only June 2024.
 - **Temporal coverage:** ~178 windows/day, median gap = 350s (one window width), 571 operational breaks (>1h) across full period
 
 ### Anomaly Detection & Feature Clustering (NB04)
 
-- **Anomalous windows:** 12,022 / 64,522 (18.6%) identified via z-score (|z|>3, ≥5 features activated per window); 724 overlap with failures (6.0%), 11,298 are normal anomalies
+- **Canonical failure events:** 21 events from the raw `TRAIN_IS_IN_FAILURE` flag (same-type blocks < 1 h apart merged): 10 train, 11 test (matches the 11 test failures in RAMS 2026); 13 brake, 6 compressor, 2 leveling (Wiener Linien records). Shared by NB04 and NB05.
+- **Anomalous windows:** 12,022 / 64,522 (18.6%) identified via z-score (|z|>3, ≥5 sensor features activated per window); 724 overlap with failures (6.0%), 11,298 are normal anomalies. Context/asset features (speed, temperature, days-since) are excluded from detection; this changes neither the anomaly set nor FC1–FC31.
+- **Drift:** anomaly rate on windows far from any failure is 10.9% in train vs 27.4% in test (43% in June 2025), in line with the baseline shift reported in RAMS 2026. 14 FCs are flagged as possibly drift-driven (test/train activation ratio ≥ 2), e.g. FC30 (0.02% → 16%).
 - **Feature activation analysis:** Top 30 most activated features are dominated by brake cylinder pressure; most have failure rates near baseline (4-7%), meaning individual features alone cannot predict failures
 - **Feature clustering (not window clustering):** Jaccard distance + average linkage (t=0.7) on binary co-activation profiles → **31 feature clusters (FC1-FC31)**, 130 features total
   - 22 multi-feature clusters, 9 single-feature clusters
   - Single-feature clusters are valid: 8/9 have failure rates above baseline, FC26 reaches 31.8%
 - **Cluster cohesion:** All 22 multi-feature clusters have internal Jaccard similarity > 0.3; mean cohesion = 0.54; 11 clusters > 0.5
-- **Failure day vs normal day validation** (all 23 failure days vs 336 normal days):
-  - FC24 (+28.7pp) and FC28 (+20.0pp) are **failure-specific** — activate far more on failure days
-  - FC4 (+17.6pp) is failure-leaning; 23 clusters are similar; FC30 is normal-leaning
-- **Two failure mechanisms discovered** via variance lead-up analysis (7 days before 18 failure events):
-  - **Gradual degradation (FC28):** MW4_LOAD_SIGNAL_min variance increases 2.84x before failure — a genuine early warning signal detectable 2-3 days ahead
-  - **Sudden shift (FC18, 19, 24, 25, 26):** Variance drops or stays flat — sensors jump to abnormal values without gradual build-up, only detectable at the moment of failure
+- **Sensor location per FC:** neutral descriptor (control chain CW1/MW1/MW2 vs CW2/MW3/MW4, bogie, signal types). High cohesion can partly reflect synchronous actuation within a chain.
+- **Failure-related day vs normal day** (26 vs 333 days): pooled, FC24 (+27.5pp) and FC28 (+20.7pp) stand out, but stratified by period only **FC19, FC25 and FC28** are more active on failure-related days in *both* train and test; FC24's effect comes almost entirely from the train period (+46pp train vs +4pp test).
+- **Temporal pattern analysis (drift-controlled, event-level tests):**
+  - **No FC is an early warning** in the [−6 d, −1 d] window used by RAMS/Helm.
+  - **FC3** is a **short-term precursor**: it fires in the 24 h before onset in 15/21 events vs 8.2 expected by chance (p < 0.001), median lead 14 h.
+  - 18 FCs are **detection-only** (strongly enriched during failures, e.g. FC19 70×, FC26 36×); 12 are weak/mixed.
+- **Volatility lead-up (real within-day variance, same-period baseline):** only FC24 shows a moderate, monotonic pre-onset increase (1.25×, Kendall τ = 0.71, p = 0.03). FC28 rises only on the onset day (1.55×; pre-onset 1.18×).
+  - *Correction:* the earlier claim "FC28 variance ramps up 2.96× before failure" came from a bug. No `_std` features exist, so the old cell plotted the daily mean level and measured the ratio on the failure day itself. It is not supported.
 - **Heuristic comparison:** Jaccard-based (Heuristic A) vs correlation-based (Heuristic B) clustering produce similar groupings (ARI, NMI, co-membership agreement), validating robustness
 - **Binary vs continuous validation:** Binary activation patterns preserve continuous correlation structure (positive Pearson r between binary cohesion and continuous correlation across clusters)
 
 ### Pattern Discovery & Validation (NB05)
 
-- Links feature clusters to failure events and physical subsystems
-- Expert verification preparation: cluster summaries with top features and statistics
-- Deep dives into critical clusters with raw sensor data
+- **Event-level scorecard per FC** (Helm 2025; RAMS 2026): alarm episodes with persistence filter, early/late hits, false alarms, drift-controlled lift, 24 h lead time. KEEP (lift ≥ 1.5, ≥ 3 events): FC19, FC31, FC3, FC16, FC18, FC17; the other 25 FCs are REVIEW.
+- **Prior-work flagged intervals** (the "zoom-in" pipeline from RAMS 2026, p7): RF reaches 11/11 early hits on the test events. FC24, FC25, FC26, FC28 and FC30 are over-represented in RF **false alarms**; FC10, FC27 and FC29 mark RF **early hits**. For LSTM-AE, FC4/5/6/10/12/24/27/28/29 mark early hits and FC30/31 false alarms.
+- **FC × Wiener Linien failure type:** enrichment in the 24 h before and during failures, per recorded type (evidence for the experts only; no subsystem labels assigned to FCs).
+- **Expert verification sheet** (`outputs/nb05_artifacts/expert_verification_sheet.csv/.xlsx`) with all evidence plus empty expert columns; the RQ1 verification metric and `build_subsystem_datasets()` run once the filled sheet is returned.
+- Deep dives are selected from the data (currently FC19 and FC3).
 
 ---
 
