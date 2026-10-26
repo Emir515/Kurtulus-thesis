@@ -70,7 +70,9 @@ Using Steiner's best hyperparameters (n_estimators=300, max_depth=4, threshold=0
 
 LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation). NB02 does not threshold the LSTM-AE; "F1 ≈ 0.08" is Steiner/Helm's value. NB05 uses the 99th percentile of the validation split (1.123).
 
-> **Open decision (label definition):** NB02 sets label = 1 if a failure overlaps [window_end, window_end + 6.2 h), so all 543 windows *inside* a failure are positive (≈45% of the 1,202 positives). Steiner/Helm use a point-shifted label and drop ambiguous in-failure windows, so our F1 = 0.120 is not directly comparable to their 0.21. In addition, the RF threshold is tuned on an undersampled holdout (10% positives vs 2.9% in test). Fixing either requires re-running NB02, which changes NB03–NB05 and possibly FC1–FC31.
+> **Label definition (checked against Helm's code, `references/stefan/`):** label = 1 if a failure overlaps [window_end, window_end + 6.2 h) (Helm's `create_shifted_labels`: max of the failure flag over that interval). Windows inside a failure are therefore positive (543 of 1,202), and the filter rule removes nothing, exactly as in Helm's code. Helm's thesis text (p87) describes dropping ambiguous in-failure windows, but the code does not. The threshold is tuned on the last 20% of the undersampled train set, also as in Helm's `train_rf_adapted.py`.
+>
+> A test of the point-shifted variant (failure state 6.2 h ahead, ambiguous windows dropped) gave only 0.5% positives in train, 172 of 218 of them from one long failure, and a test F1 near 0. So it was not adopted. The remaining gap to Steiner's F1 = 0.21 is Helm's 5-fold blocked-CV **grid search**, planned for Phase 2.
 
 **Full-period anomaly timeline (Jun 2024 – Jun 2025):**
 
