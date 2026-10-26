@@ -4,26 +4,20 @@ Import this in notebooks and scripts instead of hardcoding paths.
 """
 from pathlib import Path
 
-# ── Root ──────────────────────────────────────────────────────────────────────
-ROOT = Path(r'C:\Users\Emırhan\Desktop\MASTER THESIS\Kurtulus-thesis')
+# ── Root (project folder = parent of src/) ────────────────────────────────────
+ROOT = Path(__file__).resolve().parents[1]
 
 # ── Data ──────────────────────────────────────────────────────────────────────
 # Raw data lives in train/ and test/ at project root (not moved — too large)
 TRAIN_GLOB = str(ROOT / 'train' / '**' / '*.parquet')
 TEST_GLOB  = str(ROOT / 'test'  / '**' / '*.parquet')
 
-# Wildcard username variant (portable across user profile renames)
-TRAIN_GLOB_PORTABLE = r'C:\Users\Em*\Desktop\MASTER THESIS\Kurtulus-thesis\train\**\*.parquet'
-TEST_GLOB_PORTABLE  = r'C:\Users\Em*\Desktop\MASTER THESIS\Kurtulus-thesis\test\**\*.parquet'
-
 # ── Outputs ───────────────────────────────────────────────────────────────────
-OUT_DIR   = ROOT / 'outputs'
-PLOTS_DIR = OUT_DIR / 'plots'
+OUT_DIR = ROOT / 'outputs'
 
-for _d in [PLOTS_DIR]:
-    _d.mkdir(parents=True, exist_ok=True)
-
-# ── Sensor subsystem schema ───────────────────────────────────────────────────
+# ── Documented sensor-group schema (MetroAT documentation) ────────────────────
+# Groups describe sensor channels only; the data-driven feature clusters (NB04)
+# are not assigned to subsystems here; that is done by the domain experts (NB05).
 LABEL_COLS = [
     'TIMESTAMP',
     'TRAIN_IS_IN_FAILURE', 'TRAIN_FAILURE_TYPE',

@@ -143,27 +143,30 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 
 ```
 Kurtulus-thesis/
-├── train/                          # Raw parquet data (Jun 2024 - Feb 2025, 246 files)
-├── test/                           # Raw parquet data (Feb 2025 - Jun 2025, 136 files)
+├── train/                          # Raw parquet data (Jun 2024 - Feb 2025, 246 files), not in git
+├── test/                           # Raw parquet data (Feb 2025 - Jun 2025, 136 files), not in git
 ├── notebooks/
-│   ├── 01_data_exploration.ipynb   # Full EDA: timelines, sensor plots, precursors, correlations
-│   ├── 02_anomaly_dataset_creation.ipynb  # Supervised & unsupervised pipeline + RF & LSTM-AE
-│   ├── 03_dataset_analysis.ipynb   # Full-period analysis: hotspots, distributions, subsystem discriminability
-│   ├── 04_anomaly_detection_cluster_analysis.ipynb  # Feature clustering, validation, failure mechanisms
-│   └── 05_pattern_discovery_validation.ipynb  # Cluster-to-subsystem mapping, expert verification
+│   ├── 01_data_exploration.ipynb   # EDA: events, timelines, sensor shifts during failures, correlation structure
+│   ├── 02_anomaly_dataset_creation.ipynb  # Windowed features, labels, RF + LSTM-AE baselines (Helm/Steiner setup)
+│   ├── 03_dataset_analysis.ipynb   # Full-period analysis: train/test shift, hotspots, per-period Cohen's d
+│   ├── 04_anomaly_detection_cluster_analysis.ipynb  # Z-score anomalies, feature clustering (FC1-FC31), temporal + drift analysis
+│   └── 05_pattern_discovery_validation.ipynb  # Event-level FC scoring, prior-model alarms, expert verification sheet
 ├── src/
-│   ├── config.py                   # Central paths, sensor schema, hyperparams
+│   ├── config.py                   # Paths, documented sensor-group schema, split date
 │   └── __init__.py
 ├── references/
-│   └── stefan/                     # Prior work scripts and predictions (Helm 2025)
-├── Papers/                         # Reference literature
-├── outputs/
-│   ├── supervised/                 # train.parquet, test.parquet, rf_model, predictions
-│   ├── unsupervised/              # .npy arrays, lstm_ae_model, predictions
-│   ├── nb04_artifacts/            # Feature clusters, activation matrices, constants
-│   ├── anomaly_timeline_full.png
-│   ├── heuristic_comparison.png
-│   └── binary_vs_continuous_validation.png
+│   └── stefan/                     # Helm's original scripts and predictions (reference implementation)
+├── Papers/                         # Reference literature (Helm thesis, RAMS 2026, MetroAT, proposal, ...)
+├── outputs/                        # Generated, not in git
+│   ├── supervised/                 # Feature caches, train/test parquet, RF model + test predictions
+│   ├── unsupervised/               # LSTM-AE sequences (.npy), model, metadata, scores
+│   ├── nb02_artifacts/             # Test-period anomaly timeline
+│   ├── nb03_artifacts/             # Full-period timeline, aggregation redundancy
+│   ├── nb04_artifacts/             # FC1-FC31, activations, canonical failure events, temporal/drift/location tables
+│   ├── nb05_artifacts/             # Scorecard, prior-model enrichment, failure-type table, expert verification sheet
+│   ├── WL_Expert_Review_NB04.pdf   # Expert review document for Wiener Linien
+│   └── NB04_Workflow_and_Metrics.pdf
+├── thesis-latex/                   # LaTeX thesis (separate git repo, synced with Overleaf)
 ├── requirements.txt
 └── README.md
 ```
@@ -172,12 +175,13 @@ Kurtulus-thesis/
 
 ## Methodology
 
-1. **Data Exploration (NB01)** — dataset structure, failure events, full-timeline sensor analysis, precursor detection
-2. **Anomaly Dataset Creation (NB02)** — supervised (windowed features + RF) and unsupervised (raw sequences + LSTM-AE) matching Steiner's best baseline configs, predict on all test windows
-3. **Dataset Analysis (NB03)** — full-period anomaly timeline, score distributions (train vs test), hotspot detection, subsystem discriminability (Cohen's d), correlation analysis, standardization checks, temporal coverage
-4. **Anomaly Detection & Feature Clustering (NB04)** — z-score anomaly detection, feature activation profiles, feature clustering via Jaccard distance, failure day vs normal day validation, variance lead-up analysis discovering two failure mechanisms (gradual vs sudden), heuristic comparison, binary vs continuous validation
-5. **Pattern Discovery & Validation (NB05)** — link clusters to failure events and subsystems, prepare expert verification sheets, deep dives with raw sensor data
-6. **Modeling & Evaluation (Phase 2)** — train supervised (RF, GBM) and unsupervised (LSTM-AE) models on flat vs subsystem-aware representations, controlled comparison (next)
+1. **Data Exploration (NB01)**: dataset structure, failure and maintenance events, full-timeline sensor plots, sensor shifts during failures, correlation structure by documented sensor group
+2. **Anomaly Dataset Creation (NB02)**: windowed features (6 min), labels and RF / LSTM-AE baselines replicating Helm's code with Steiner's best parameters; predictions on all test windows
+3. **Dataset Analysis (NB03)**: full-period score timeline, train/test shift, hotspots, per-period Cohen's d, aggregation redundancy, standardization checks, temporal coverage
+4. **Anomaly Detection & Feature Clustering (NB04)**: canonical failure events, z-score anomaly windows, feature clustering via Jaccard distance (FC1-FC31), cluster validation, drift-controlled temporal pattern analysis, volatility lead-up, drift checks
+5. **Pattern Discovery & Validation (NB05)**: event-level scoring of each FC, FCs behind the RF/LSTM-AE early hits and false alarms, FC vs. recorded failure type, expert verification sheet and RQ1 metric
+6. **Expert verification (RQ1)**: Wiener Linien experts assign subsystems to FCs via the verification sheet
+7. **Modeling & Evaluation (Phase 2, RQ2)**: RF grid search, then subsystem-aware vs. full-feature representations under identical conditions
 
 ---
 
@@ -187,8 +191,15 @@ Kurtulus-thesis/
 # Install dependencies
 pip install -r requirements.txt
 
-# Open exploration notebook
-jupyter notebook notebooks/01_data_exploration.ipynb
+# Run the pipeline in order (each notebook reads the previous one's outputs)
+cd notebooks
+for nb in 01_data_exploration 02_anomaly_dataset_creation 03_dataset_analysis \
+          04_anomaly_detection_cluster_analysis 05_pattern_discovery_validation; do
+  jupyter nbconvert --to notebook --execute --inplace $nb.ipynb --ExecutePreprocessor.timeout=3600
+done
 ```
 
-**Note:** The `train/` and `test/` folders are not in version control (large binary files). The `outputs/` directory is also gitignored. All paths are configured in `src/config.py`.
+**Notes**
+- The `train/`, `test/` and `outputs/` folders are not in version control.
+- Memory: loading all raw data at once needs ~15 GB. NB01 loads only the columns it needs. NB02 caches the windowed features, LSTM-AE sequences and weights; set `REBUILD_FEATURES`, `REBUILD_SEQUENCES` or `RETRAIN_AE = True` in NB02 to rebuild them from raw data (~7 GB RAM).
+- Paths and the documented sensor-group schema are in `src/config.py`.
