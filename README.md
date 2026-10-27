@@ -61,7 +61,7 @@ Dataset source: https://researchdata.tuwien.ac.at/records/9ja0q-bq581
 
 ### Our Reproduction (NB02a datasets, NB02b baselines)
 
-Current RF outputs (earlier fixed-parameter version, no grid search, threshold = 0.20):
+Current RF outputs (earlier version: Helm's selected parameters, refitted on the full undersampled set, raw scores without smoothing, threshold = 0.20):
 
 | Model | Test Windows | True Failures | Predicted | F1 | P | R | FAR |
 |-------|-------------|---------------|-----------|-----|------|------|------|
@@ -70,7 +70,19 @@ Current RF outputs (earlier fixed-parameter version, no grid search, threshold =
 
 LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation). NB02b does not threshold the LSTM-AE; "F1 ≈ 0.08" is Steiner/Helm's value. NB05 uses the 99th percentile of the validation split (1.123).
 
-> **Datasets match Steiner/Helm exactly.** All 1,674 test windows flagged by Helm's RF (`references/stefan/supervised_test_predictions.csv`) exist in our test set with identical labels. Recomputed on our 669 test positives, his predictions give P = 0.143, R = 0.357, **F1 = 0.204** (reported: 0.21). The gap to our 0.120 is therefore model tuning, not data: the old RF used fixed parameters and refitted on the full undersampled set. NB02b now contains Helm's full procedure (432-combination grid search with 5-fold blocked CV on the dev set, threshold on the holdout, test scored with the dev-fitted model). It is **not executed yet** and is planned for Phase 2; afterwards NB03 and NB05 §4 are re-run.
+> **Datasets match Steiner/Helm exactly.** All 1,674 test windows flagged by Helm's RF (`references/stefan/supervised_test_predictions.csv`) exist in our test set with identical labels. On his test period (11 Feb – 1 Jun 2025, 641 positive windows) his predictions give P = 0.143, R = 0.373, **F1 = 0.206**, exactly the value printed in his `result_analysis.ipynb` (reported: 0.21).
+>
+> **Where the gap to our 0.120 comes from: two-sided score smoothing, not tuning.** Helm's handover (`Stefan Work/.../result_analysis.ipynb`) shows that the published numbers are computed on **smoothed** scores. A 4th-order Butterworth low-pass filter is run over the score series forwards and backwards (`filtfilt`), and its cutoff and the threshold are chosen together on the holdout (RF: cutoff 0.012755, threshold 0.15; LSTM-AE: cutoff 0.048571, threshold 0.6). `filtfilt` uses **future** scores, so this cannot run in real time. His selected RF parameters are the same ones our old RF used, so the grid search does not close the gap. With these parameters on our data (test until 1 Jun):
+>
+> | Score processing | F1 |
+> |---|---|
+> | Raw scores (our current RF) | 0.126 |
+> | Helm's two-sided `filtfilt` | 0.165 (Helm: 0.206) |
+> | Same filter, causal (`lfilter`, past scores only, deployable) | 0.109 |
+>
+> The deployable version of the published baseline therefore reaches about 0.11–0.13. NB02b now contains Helm's full procedure (432-combination grid search with 5-fold blocked CV, smoothing and threshold chosen on the holdout, test scored with the dev-fitted model) and reports every result **raw, causal and two-sided**; RQ2 applies the same three modes to every model. NB02b is **not executed yet** (Phase 2); afterwards NB03 and NB05 §4 are re-run.
+>
+> **How the published "11/11 early hits, 14 false alarms" were counted:** each record in Helm's `failure.csv` between 10 Feb and 1 Jun 2025 is one failure (the two overlapping records of 18 Feb count separately; the June failures are excluded), an early hit is any smoothed score above the threshold 1–6 days before the start, and a false alarm is an upward threshold crossing outside [start − 6 d, end]. Our NB05 counts merged events from the data's failure flag (11 test events including June) and alarm episodes, so the counts are not directly comparable.
 
 > **Label definition (checked against Helm's code, `references/stefan/`):** label = 1 if a failure overlaps [window_end, window_end + 6.2 h) (Helm's `create_shifted_labels`: max of the failure flag over that interval). Windows inside a failure are therefore positive (543 of 1,202), and the filter rule removes nothing, exactly as in Helm's code. Helm's thesis text (p87) describes dropping ambiguous in-failure windows, but the code does not. The threshold is tuned on the last 20% of the undersampled train set, also as in Helm's `train_rf_adapted.py`.
 >
@@ -95,13 +107,14 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 
 - Turns the raw MetroAT `train/` and `test/` files into the model-ready representations of the MetroAT framework; the official train/test split is kept (train windows only from `train/`, test windows only from `test/`)
 - Follows Helm's code: epoch-aligned 6-min windowing, maintenance filtering, analog (min/max/mean/sum) and binary (active_s/flips) aggregation, asset lookback, 6.2 h failure labels (in-failure windows are positive, so the filter rule removes nothing, as in Helm's code)
-- 23-min LSTM-AE sequences of the 95 sensor channels, z-scored with train statistics
+- 23-min LSTM-AE sequences of the 95 sensor channels; the code follows Helm (3.1 h label at the sequence end, normal-only training set, `dev_eval` hold-out), the cached sequences are rebuilt in Phase 2
 - Sequential processing (train then test) to stay within memory limits (~16 GB); features and sequences are cached
 
 ### Full-Feature Baselines (NB02b)
 
-- RF: Helm's 432-combination grid search with 5-fold blocked CV on the dev set, threshold tuned on the 20% temporal holdout, test scored with the dev-fitted model (not executed yet, Phase 2)
-- LSTM-AE trained on normal-only train sequences (10 epochs, CPU)
+- RF: Helm's 432-combination grid search with 5-fold blocked CV on the dev set, score smoothing and threshold chosen on the 20% temporal holdout, test scored with the dev-fitted model (not executed yet, Phase 2)
+- LSTM-AE trained on normal-only train sequences (10 epochs, CPU); smoothing and threshold chosen on the `dev_eval` hold-out once NB02a's Helm-aligned sequences are built
+- Every result is reported **raw**, **causal** (low-pass on past scores only) and **two-sided** (Helm's `filtfilt`, uses future scores; for comparison with the published numbers only)
 - Both models predict on ALL test windows; these are the full-feature side of the RQ2 comparison
 
 ### Dataset Analysis — Full Period (NB03)
@@ -140,7 +153,7 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 
 - **Event-level scorecard per FC** (Helm 2025; RAMS 2026): alarm episodes with persistence filter, early/late hits, false alarms, drift-controlled lift, 24 h lead time.
 - **KEEP verdict on train events only, test events as a check:** KEEP if lift ≥ 1.5 and ≥ 3 events covered on the **10 train events**; the same rule is then checked on the **11 test events**. 15 of 19 FCs are KEEP on train, but only **3 hold on the test events: FC7** (train lift 4.4 / test 2.4, 1 false alarm), **FC5** (3.7 / 1.9, lead ~15 h) and **FC8** (spring-brake pressure min, 2.5 / 1.5). The other 12 fall to chance level in the test period (7 of them drift-flagged). Note: 42% of test windows lie near a failure (train: 19%), so test lift is capped near 2.4 and the check is strict.
-- **Prior-work flagged intervals** (the "zoom-in" pipeline from RAMS 2026, p7; current fixed-parameter RF): RF reaches 11/11 early hits and LSTM-AE 10/11 on the test events. FC2, FC6 and FC18 are over-represented in RF **false alarms**; FC1, FC14 and FC17 mark RF **early hits**. For LSTM-AE, FC1/2/9/10/14/15/17/18/19 mark early hits. This section is re-run after NB02b's grid search.
+- **Prior-work flagged intervals** (the "zoom-in" pipeline from RAMS 2026, p7; current RF, raw scores): RF reaches 11/11 early hits and LSTM-AE 10/11 on the test events. FC2, FC6 and FC18 are over-represented in RF **false alarms**; FC1, FC14 and FC17 mark RF **early hits**. For LSTM-AE, FC1/2/9/10/14/15/17/18/19 mark early hits. This section is re-run after NB02b's grid search.
 - **FC × Wiener Linien failure type:** enrichment in the 24 h before and during failures, per recorded type (evidence for the experts only; no subsystem labels assigned to FCs).
 - **Expert verification sheet** (`outputs/nb05_artifacts/expert_verification_sheet.csv/.xlsx`) with all evidence (including `lift_train`, `verdict`, `lift_test`, `test_check`) plus empty expert columns; the RQ1 verification metric and `build_subsystem_datasets()` run once the filled sheet is returned.
 - Deep dives are selected from the data (currently FC7 and FC8).
@@ -186,7 +199,7 @@ Kurtulus-thesis/
 
 1. **Data Exploration (NB01)**: dataset structure, failure and maintenance events, full-timeline sensor plots, sensor shifts during failures, correlation structure by documented sensor group
 2. **Dataset Creation (NB02a)**: windowed features (6 min) with 6.2 h labels and LSTM-AE sequences (23 min) from the raw MetroAT train/test files, replicating Helm's code
-3. **Full-Feature Baselines (NB02b)**: RF (Helm's grid search with blocked CV) and LSTM-AE on all features; predictions on all test windows (run in Phase 2)
+3. **Full-Feature Baselines (NB02b)**: RF (Helm's grid search with blocked CV) and LSTM-AE on all features; smoothing and threshold chosen on hold-outs; predictions on all test windows, reported raw / causal / two-sided (run in Phase 2)
 4. **Dataset Analysis (NB03)**: full-period score timeline, train/test shift, hotspots, per-period Cohen's d, aggregation redundancy, standardization checks, temporal coverage
 5. **Anomaly Detection & Feature Clustering (NB04)**: canonical failure events, z-score anomaly windows, feature clustering via Jaccard distance fitted on the train period only (FC1-FC19), cluster validation, drift-controlled temporal pattern analysis, volatility lead-up, drift checks
 6. **Pattern Discovery & Validation (NB05)**: event-level scoring of each FC (KEEP decided on train events, checked on test events), FCs behind the RF/LSTM-AE early hits and false alarms, FC vs. recorded failure type, expert verification sheet and RQ1 metric
