@@ -22,3 +22,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 thesis-latex/
+
+# Generated report files (rebuild with the scripts in reports/)
+reports/explainer/figs/
+reports/explainer/notebooks_explained_standalone.html

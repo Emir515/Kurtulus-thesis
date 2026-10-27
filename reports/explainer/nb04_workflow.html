@@ -1,0 +1,225 @@
+<title>NB04 Clustering Workflow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; a five-step overview strip, then one plain-language card per step, grouped into Part A (build) and Part B (use) */
+:root {
+  --bg: #f5f7f9;
+  --surface: #ffffff;
+  --ink: #17212b;
+  --muted: #56636f;
+  --line: #d3dbe2;
+  --accent: #0b5cad;
+  --accent-bg: #e4eef9;
+  --a: #0f7a62;
+  --a-bg: #e8f5f0;
+  --b: #a8580a;
+  --b-bg: #fbf1e4;
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11171d; --surface: #18212a; --ink: #e4e9ee; --muted: #9aa7b3; --line: #33414e;
+    --accent: #6aa8ea; --accent-bg: #1b3047; --a: #5cc9a8; --a-bg: #132a24; --b: #f0a65a; --b-bg: #2f2314;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11171d; --surface: #18212a; --ink: #e4e9ee; --muted: #9aa7b3; --line: #33414e;
+  --accent: #6aa8ea; --accent-bg: #1b3047; --a: #5cc9a8; --a-bg: #132a24; --b: #f0a65a; --b-bg: #2f2314;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.55; }
+.wrap {
+  max-width: 880px; margin: 0 auto; display: grid; gap: 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 36px 56px;
+}
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 5vw, 38px); margin: 4px 0 8px; text-wrap: balance; }
+h2 { font-family: var(--f-display); font-weight: 700; font-size: 20px; margin: 0; text-wrap: balance; }
+.lede { margin: 0; max-width: 62ch; color: var(--muted); font-size: 17px; }
+code { font-family: var(--f-mono); font-size: 0.85em; }
+
+/* Overview strip */
+figure { margin: 0; display: grid; gap: 8px; }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+svg.strip { display: block; width: 100%; min-width: 640px; height: auto; color: var(--muted); font-family: var(--f-body); }
+svg.strip .zone-a { fill: var(--a-bg); }
+svg.strip .zone-b { fill: var(--b-bg); }
+svg.strip .zl-a { fill: var(--a); font-family: var(--f-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.05em; }
+svg.strip .zl-b { fill: var(--b); font-family: var(--f-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.05em; }
+svg.strip .dot { fill: var(--surface); stroke-width: 3; }
+svg.strip .dot.a { stroke: var(--a); }
+svg.strip .dot.b { stroke: var(--b); }
+svg.strip .num { font-family: var(--f-display); font-size: 20px; font-weight: 800; }
+svg.strip .num.a { fill: var(--a); }
+svg.strip .num.b { fill: var(--b); }
+svg.strip .lab { fill: var(--ink); font-size: 13.5px; font-weight: 600; }
+svg.strip .val { fill: var(--muted); font-size: 12.5px; }
+svg.strip .edge { stroke: currentColor; stroke-width: 1.6; fill: none; }
+svg.strip .lock { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 4; }
+svg.strip .lock-t { fill: var(--muted); font-size: 11.5px; font-style: italic; }
+figcaption { font-size: 14px; color: var(--muted); }
+
+/* Parts and step cards */
+.part { display: grid; gap: 14px; }
+.part-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.tag { font-family: var(--f-mono); font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 99px; }
+.part.a .tag { background: var(--a-bg); color: var(--a); }
+.part.b .tag { background: var(--b-bg); color: var(--b); }
+.part-head p { margin: 0; color: var(--muted); font-size: 15px; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; display: grid; grid-template-columns: 44px 1fr; gap: 4px 16px; }
+.step .n { grid-row: span 3; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; font-size: 18px; border: 3px solid; }
+.part.a .step .n { border-color: var(--a); color: var(--a); }
+.part.b .step .n { border-color: var(--b); color: var(--b); }
+.step h3 { margin: 6px 0 2px; font-size: 18px; text-wrap: balance; }
+.step p { margin: 0; max-width: 64ch; }
+.step .result { margin-top: 10px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.big { font-family: var(--f-display); font-weight: 800; font-size: 26px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.result span:last-child { color: var(--muted); font-size: 15px; }
+.tech { grid-column: 2; margin-top: 10px; font-size: 13px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 8px; }
+.tech b { color: var(--ink); font-weight: 600; }
+
+.answers { grid-column: 2; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 12px; }
+.answers > div { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; align-content: start; min-width: 0; }
+.answers .q { font-size: 14px; color: var(--muted); }
+.answers .a { font-weight: 600; }
+.answers .a em { font-style: normal; color: var(--accent); }
+
+.next { background: var(--accent-bg); border-radius: 12px; padding: 16px 20px; display: grid; gap: 4px; }
+.next p { margin: 0; }
+@media (max-width: 520px) {
+  .step { grid-template-columns: 1fr; }
+  .step .n { grid-row: auto; }
+  .tech, .answers { grid-column: 1; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Master's thesis · MetroAT · NB04</div>
+    <h1>NB04 in five steps</h1>
+    <p class="lede">NB04 looks for sensors that misbehave together. It first builds groups of such sensors using only the training months, then checks how those groups behave around the 21 recorded failures.</p>
+  </header>
+
+  <figure>
+    <div class="scroll">
+      <svg class="strip" viewBox="0 0 900 200" role="img" aria-label="Five steps. Part A uses the training months only: 1 find unusual windows (12,022), 2 keep the training months (5,351 windows), 3 group sensors that misbehave together (19 groups), 4 check the groups (87% agreement). The groups are then fixed. Part B uses the whole year: 5 study the groups around the 21 failures.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"></path>
+          </marker>
+        </defs>
+        <rect class="zone-a" x="10" y="10" width="640" height="180" rx="10"></rect>
+        <rect class="zone-b" x="680" y="10" width="210" height="180" rx="10"></rect>
+        <text class="zl-a" x="26" y="34">PART A · BUILD THE GROUPS · training months only</text>
+        <text class="zl-b" x="696" y="34">PART B · USE THEM</text>
+        <text class="zl-b" x="696" y="50">whole year</text>
+
+        <circle class="dot a" cx="90" cy="95" r="24"></circle><text class="num a" x="90" y="102" text-anchor="middle">1</text>
+        <circle class="dot a" cx="250" cy="95" r="24"></circle><text class="num a" x="250" y="102" text-anchor="middle">2</text>
+        <circle class="dot a" cx="410" cy="95" r="24"></circle><text class="num a" x="410" y="102" text-anchor="middle">3</text>
+        <circle class="dot a" cx="570" cy="95" r="24"></circle><text class="num a" x="570" y="102" text-anchor="middle">4</text>
+        <circle class="dot b" cx="785" cy="95" r="24"></circle><text class="num b" x="785" y="102" text-anchor="middle">5</text>
+
+        <line class="edge" x1="116" y1="95" x2="222" y2="95" marker-end="url(#ar)"></line>
+        <line class="edge" x1="276" y1="95" x2="382" y2="95" marker-end="url(#ar)"></line>
+        <line class="edge" x1="436" y1="95" x2="542" y2="95" marker-end="url(#ar)"></line>
+        <line class="edge" x1="596" y1="95" x2="757" y2="95" marker-end="url(#ar)"></line>
+        <line class="lock" x1="665" y1="60" x2="665" y2="180"></line>
+        <text class="lock-t" x="665" y="80" text-anchor="middle">groups fixed</text>
+
+        <text class="lab" x="90" y="146" text-anchor="middle">Find unusual</text>
+        <text class="lab" x="90" y="163" text-anchor="middle">windows</text>
+        <text class="val" x="90" y="182" text-anchor="middle">12,022</text>
+
+        <text class="lab" x="250" y="146" text-anchor="middle">Keep training</text>
+        <text class="lab" x="250" y="163" text-anchor="middle">months</text>
+        <text class="val" x="250" y="182" text-anchor="middle">5,351 windows</text>
+
+        <text class="lab" x="410" y="146" text-anchor="middle">Group sensors that</text>
+        <text class="lab" x="410" y="163" text-anchor="middle">misbehave together</text>
+        <text class="val" x="410" y="182" text-anchor="middle">19 groups</text>
+
+        <text class="lab" x="570" y="146" text-anchor="middle">Check the</text>
+        <text class="lab" x="570" y="163" text-anchor="middle">groups</text>
+        <text class="val" x="570" y="182" text-anchor="middle">87% agreement</text>
+
+        <text class="lab" x="785" y="146" text-anchor="middle">Study them</text>
+        <text class="lab" x="785" y="163" text-anchor="middle">around failures</text>
+        <text class="val" x="785" y="182" text-anchor="middle">21 failures</text>
+      </svg>
+    </div>
+    <figcaption>The test months are kept out of Part A, so they can later be used for a fair test of the subsystem-aware models (RQ2).</figcaption>
+  </figure>
+
+  <section class="part a" aria-labelledby="pa">
+    <div class="part-head">
+      <span class="tag">Part A · training months only</span>
+      <h2 id="pa">Build the groups</h2>
+    </div>
+
+    <article class="step">
+      <div class="n">1</div>
+      <h3>Find the unusual windows</h3>
+      <p>The data is cut into 6-minute windows. In each window, every sensor value is compared with its normal range from the training months. A window counts as <b>unusual</b> when at least 5 values are far outside their normal range.</p>
+      <div class="result"><span class="big">12,022</span><span>of 64,522 windows are unusual (18.6%). They contain 60% of all failure windows.</span></div>
+      <div class="tech"><b>In the notebook:</b> z-score per feature against normal training windows; "far outside" means |z| &gt; 3. 258 features after dropping the <code>_sum</code> and context features.</div>
+    </article>
+
+    <article class="step">
+      <div class="n">2</div>
+      <h3>Keep only the training months</h3>
+      <p>Only the unusual windows from June 2024 to 11 February 2025 are used to build the groups. The test months stay untouched.</p>
+      <div class="result"><span class="big">5,351</span><span>unusual windows from the training months</span></div>
+      <div class="tech"><b>Why:</b> if the test months helped build the groups, the RQ2 comparison on those months would look better than it really is.</div>
+    </article>
+
+    <article class="step">
+      <div class="n">3</div>
+      <h3>Group sensors that misbehave together</h3>
+      <p>For every pair of sensor values, NB04 counts how often they are unusual in the same windows. Values that are usually unusual together end up in the same group.</p>
+      <div class="result"><span class="big">19</span><span>groups (FC1 to FC19), built from 126 sensor values</span></div>
+      <div class="tech"><b>In the notebook:</b> Jaccard distance between features, average-linkage hierarchical clustering, cut at 0.7. Only features unusual in at least 1% of the windows are used.</div>
+    </article>
+
+    <article class="step">
+      <div class="n">4</div>
+      <h3>Check that the groups are real</h3>
+      <p>A second grouping method, based on correlation, is run as a comparison, and the tightness of each group is measured.</p>
+      <div class="result"><span class="big">87%</span><span>of sensor pairs are grouped the same way by both methods</span></div>
+      <div class="tech"><b>In the notebook:</b> mean cohesion 0.63 (every group above 0.3); the 0/1 grouping keeps the structure of the real values in 16 of 16 groups.</div>
+    </article>
+  </section>
+
+  <section class="part b" aria-labelledby="pb">
+    <div class="part-head">
+      <span class="tag">Part B · whole year</span>
+      <h2 id="pb">Use the fixed groups</h2>
+    </div>
+
+    <article class="step">
+      <div class="n">5</div>
+      <h3>Study the groups around the 21 failures</h3>
+      <p>The 19 groups are now fixed. NB04 checks when each group is active in both the training and the test months, and asks four questions.</p>
+      <div class="answers">
+        <div><span class="q">Does a group warn before a failure?</span><span class="a">Not days ahead. <em>FC5</em> and <em>FC7</em> warn a few hours ahead.</span></div>
+        <div><span class="q">Is a group busier on failure days?</span><span class="a">Yes in both periods: <em>FC2</em> and <em>FC6</em>.</span></div>
+        <div><span class="q">Do the values get shakier before a failure?</span><span class="a">Only <em>FC18</em>, slightly (1.25×).</span></div>
+        <div><span class="q">Is a group just reacting to 2025 changes?</span><span class="a"><em>9 groups</em> are much busier in 2025 without failures nearby.</span></div>
+      </div>
+      <div class="tech"><b>Example:</b> FC5 (CW2 compressor switching) is active in the 24 h before 15 of the 21 failures, where about 8 would be expected by chance, about 14 h ahead.</div>
+    </article>
+  </section>
+
+  <div class="next">
+    <p><b>Next: NB05.</b> NB05 scores each group as an alarm and builds the sheet for the Wiener Linien experts, who decide which subsystem each group belongs to.</p>
+  </div>
+</div>

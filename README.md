@@ -176,12 +176,16 @@ Kurtulus-thesis/
 │   ├── 02b_baselines.ipynb         # Full-feature RF (grid search) + LSTM-AE baselines; not executed yet (Phase 2)
 │   ├── 03_dataset_analysis.ipynb   # Full-period analysis: train/test shift, hotspots, per-period Cohen's d
 │   ├── 04_anomaly_detection_cluster_analysis.ipynb  # Z-score anomalies, train-only feature clustering (FC1-FC19), temporal + drift analysis
-│   └── 05_pattern_discovery_validation.ipynb  # Event-level FC scoring, prior-model alarms, expert verification sheet
+│   └── 05_pattern_discovery_validation.ipynb  # Event-level FC scoring, prior-model alarms, raw-signal back-calculation, air-system trends, expert sheet
 ├── src/
 │   ├── config.py                   # Paths, documented sensor-group schema, split date
 │   └── __init__.py
+├── reports/
+│   ├── generate_expert_review.py   # Builds the Wiener Linien review material into outputs/expert_review/
+│   ├── explainer/                  # "Thesis Notebooks Explained" page (HTML source + build script) and NB04 page
+│   └── README.md
 ├── references/
-│   └── stefan/                     # Helm's original scripts and predictions (reference implementation)
+│   └── stefan/                     # Helm's scripts, result analysis and predictions (reference implementation, see its README)
 ├── Papers/                         # Reference literature (Helm thesis, RAMS 2026, MetroAT, proposal, ...)
 ├── outputs/                        # Generated, not in git
 │   ├── supervised/                 # Feature caches, train/test parquet (NB02a); RF model + test predictions (NB02b)
@@ -189,9 +193,8 @@ Kurtulus-thesis/
 │   ├── nb02_artifacts/             # Test-period anomaly timeline (NB02b)
 │   ├── nb03_artifacts/             # Full-period timeline, aggregation redundancy
 │   ├── nb04_artifacts/             # FC1-FC19, activations, canonical failure events, temporal/drift/location tables
-│   ├── nb05_artifacts/             # Scorecard, prior-model enrichment, failure-type table, expert verification sheet
-│   ├── WL_Expert_Review_NB04.pdf   # Expert review document for Wiener Linien
-│   └── NB04_Workflow_and_Metrics.pdf
+│   ├── nb05_artifacts/             # Scorecard, top-10 values, raw signals, air-system tables, expert verification sheet
+│   └── expert_review/              # Everything to send to Wiener Linien: review PDF, workflow PDF, verification sheet
 ├── thesis-latex/                   # LaTeX thesis (separate git repo, synced with Overleaf)
 ├── requirements.txt
 └── README.md

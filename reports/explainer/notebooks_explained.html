@@ -1,0 +1,685 @@
+<title>Thesis Notebooks Explained</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; a two-row workflow map of the notebooks, then one plain-language section per notebook */
+:root {
+  --bg: #f5f7f9;
+  --surface: #ffffff;
+  --ink: #17212b;
+  --muted: #56636f;
+  --line: #d3dbe2;
+  --accent: #0b5cad;
+  --accent-bg: #e4eef9;
+  --explore: #5a6b7d;
+  --explore-bg: #edf1f5;
+  --build: #0f7a62;
+  --build-bg: #e8f5f0;
+  --wait: #6b5bb5;
+  --wait-bg: #efecfa;
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11171d; --surface: #18212a; --ink: #e4e9ee; --muted: #9aa7b3; --line: #33414e;
+    --accent: #6aa8ea; --accent-bg: #1b3047; --explore: #a9b8c7; --explore-bg: #222c36;
+    --build: #5cc9a8; --build-bg: #132a24; --wait: #ab9ff0; --wait-bg: #26223f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11171d; --surface: #18212a; --ink: #e4e9ee; --muted: #9aa7b3; --line: #33414e;
+  --accent: #6aa8ea; --accent-bg: #1b3047; --explore: #a9b8c7; --explore-bg: #222c36;
+  --build: #5cc9a8; --build-bg: #132a24; --wait: #ab9ff0; --wait-bg: #26223f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.6; }
+.wrap {
+  max-width: 900px; margin: 0 auto; display: grid; gap: 30px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 36px 60px;
+}
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 5vw, 40px); margin: 4px 0 10px; text-wrap: balance; }
+h2 { font-family: var(--f-display); font-weight: 800; font-size: 24px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 0 0 6px; }
+p { margin: 0; max-width: 66ch; }
+.lede { color: var(--muted); font-size: 17px; }
+code { font-family: var(--f-mono); font-size: 0.82em; }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Workflow map */
+figure { margin: 0; display: grid; gap: 8px; }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+svg.map { display: block; width: 100%; min-width: 700px; height: auto; color: var(--muted); font-family: var(--f-body); }
+svg.map .node { stroke-width: 2; }
+svg.map .explore { fill: var(--explore-bg); stroke: var(--explore); }
+svg.map .build { fill: var(--build-bg); stroke: var(--build); }
+svg.map .analysis { fill: var(--accent-bg); stroke: var(--accent); }
+svg.map .wait { fill: var(--wait-bg); stroke: var(--wait); stroke-dasharray: 6 4; }
+svg.map .id { fill: var(--ink); font-family: var(--f-mono); font-size: 13px; font-weight: 500; }
+svg.map .nm { fill: var(--ink); font-size: 14px; font-weight: 600; }
+svg.map .out { fill: var(--muted); font-size: 12.5px; }
+svg.map .edge { stroke: currentColor; stroke-width: 1.6; fill: none; }
+svg.map .el { fill: var(--muted); font-size: 12px; font-style: italic; }
+figcaption { font-size: 14px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13.5px; color: var(--muted); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.sw { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; display: inline-block; }
+.sw.explore { background: var(--explore-bg); border-color: var(--explore); }
+.sw.build { background: var(--build-bg); border-color: var(--build); }
+.sw.analysis { background: var(--accent-bg); border-color: var(--accent); }
+.sw.wait { background: var(--wait-bg); border-color: var(--wait); border-style: dashed; }
+
+/* Notebook sections */
+.nb { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 22px 24px; display: grid; gap: 16px; scroll-margin-top: 12px; }
+.nb-head { display: grid; gap: 4px; }
+.tagrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tag { font-family: var(--f-mono); font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 99px; }
+.tag.explore { background: var(--explore-bg); color: var(--explore); }
+.tag.build { background: var(--build-bg); color: var(--build); }
+.tag.analysis { background: var(--accent-bg); color: var(--accent); }
+.tag.wait { background: var(--wait-bg); color: var(--wait); }
+.file { font-family: var(--f-mono); font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.question { font-size: 17px; }
+.question b { color: var(--accent); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px 26px; }
+.cols > div { min-width: 0; }
+ol, ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+li { padding-left: 2px; }
+li b { color: var(--ink); }
+.groups { display: grid; gap: 16px; scroll-margin-top: 12px; }
+.glossary { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; display: grid; gap: 8px; }
+.glossary ul { gap: 6px; }
+.fcgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.fc { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; min-width: 0; scroll-margin-top: 12px; }
+.fc.robust { border: 2px solid var(--build); }
+.fc p { font-size: 15px; max-width: none; }
+.fct { margin: 0; font-size: 17px; text-transform: none; letter-spacing: 0; color: var(--ink); text-wrap: balance; }
+.fcid { font-family: var(--f-mono); font-size: 13px; color: var(--surface); background: var(--accent); padding: 2px 7px; border-radius: 5px; margin-right: 6px; }
+.fc.robust .fcid { background: var(--build); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12.5px; padding: 2px 9px; border-radius: 99px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.chip.ok { background: var(--build-bg); color: var(--build); border-color: var(--build); }
+.chip.no { color: var(--muted); }
+.chip.warn { background: var(--wait-bg); color: var(--wait); border-color: var(--wait); }
+ul.feats { font-size: 14.5px; gap: 4px; padding-left: 18px; }
+ul.feats .where { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.plots { border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; display: grid; gap: 10px; }
+.plots ul { gap: 10px; list-style: none; padding-left: 0; }
+.plots li { display: grid; gap: 2px; padding-left: 12px; border-left: 3px solid var(--line); }
+.plots .pn { font-weight: 600; }
+.plots .pn code { font-weight: 400; color: var(--muted); }
+.plots figure.pf { margin: 6px 0 4px; display: grid; gap: 8px; }
+.plots figure.pf img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; background: #ffffff; }
+.plots .kind { font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 1px 7px; margin-left: 6px; font-weight: 400; }
+.plots .row { font-size: 15px; }
+.plots .row b { color: var(--ink); }
+.plots .row.read { color: var(--muted); font-size: 14.5px; }
+.plots .row.matters b { color: var(--accent); }
+.plots .row.caveat { color: var(--muted); font-size: 14px; font-style: italic; }
+.plots .how { font-size: 14.5px; color: var(--muted); }
+.plots .shows { font-size: 15px; }
+.learned { background: var(--bg); border-radius: 10px; padding: 14px 18px; display: grid; gap: 8px; }
+.learned p { max-width: none; }
+.learned ul { gap: 8px; }
+.learned li b { color: var(--accent); }
+.learned .sum { border-top: 1px solid var(--line); padding-top: 8px; font-weight: 600; }
+.note { font-size: 14px; color: var(--muted); }
+.end { background: var(--wait-bg); border-radius: 14px; padding: 18px 22px; display: grid; gap: 8px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Master's thesis · MetroAT · Vienna metro</div>
+    <h1>The thesis notebooks, step by step</h1>
+    <p class="lede">A Vienna metro train recorded about 100 sensors every second for a year and broke down 21 times. The thesis asks whether grouping the sensors by the part of the train they belong to helps predict breakdowns with fewer false alarms. Each notebook below does one part of that work.</p>
+  </header>
+
+  <figure>
+    <div class="scroll">
+      <svg class="map" viewBox="0 0 920 320" role="img" aria-label="Workflow: NB01 explores the raw data, NB02a builds the datasets, NB02b holds the old models and is not run yet, NB03 explores the datasets. Then NB04 finds 19 sensor groups and NB05 checks and explains them; 3 groups hold up. Next come the Wiener Linien experts and then Phase 2, which both wait.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"></path>
+          </marker>
+        </defs>
+        <!-- Row 1: preparation and exploration -->
+        <rect class="node explore" x="20" y="40" width="190" height="86" rx="10"></rect>
+        <text class="id" x="36" y="64">NB01</text>
+        <text class="nm" x="36" y="86">Explore the raw data</text>
+        <text class="out" x="36" y="108">21 breakdowns found</text>
+
+        <rect class="node build" x="250" y="40" width="190" height="86" rx="10"></rect>
+        <text class="id" x="266" y="64">NB02a</text>
+        <text class="nm" x="266" y="86">Build the datasets</text>
+        <text class="out" x="266" y="108">64,522 six-minute pieces</text>
+
+        <rect class="node wait" x="480" y="40" width="190" height="86" rx="10"></rect>
+        <text class="id" x="496" y="64">NB02b</text>
+        <text class="nm" x="496" y="86">Old models (baseline)</text>
+        <text class="out" x="496" y="108">ready, runs in Phase 2</text>
+
+        <rect class="node explore" x="710" y="40" width="190" height="86" rx="10"></rect>
+        <text class="id" x="726" y="64">NB03</text>
+        <text class="nm" x="726" y="86">Explore the datasets</text>
+        <text class="out" x="726" y="108">2025 behaves differently</text>
+
+        <line class="edge" x1="210" y1="83" x2="248" y2="83" marker-end="url(#ar)"></line>
+        <line class="edge" x1="440" y1="83" x2="478" y2="83" marker-end="url(#ar)"></line>
+        <line class="edge" x1="670" y1="83" x2="708" y2="83" marker-end="url(#ar)"></line>
+
+        <!-- Turn to row 2 -->
+        <polyline class="edge" points="805,126 805,166 115,166 115,198" marker-end="url(#ar)"></polyline>
+        <text class="el" x="460" y="158" text-anchor="middle">then the main analysis (RQ1)</text>
+
+        <!-- Row 2: analysis and what follows -->
+        <rect class="node analysis" x="20" y="200" width="190" height="86" rx="10"></rect>
+        <text class="id" x="36" y="224">NB04</text>
+        <text class="nm" x="36" y="246">Find sensor groups</text>
+        <text class="out" x="36" y="268">19 groups</text>
+
+        <rect class="node analysis" x="250" y="200" width="190" height="86" rx="10"></rect>
+        <text class="id" x="266" y="224">NB05</text>
+        <text class="nm" x="266" y="246">Check and explain</text>
+        <text class="out" x="266" y="268">3 groups hold up</text>
+
+        <rect class="node wait" x="480" y="200" width="190" height="86" rx="10"></rect>
+        <text class="id" x="496" y="224">Experts</text>
+        <text class="nm" x="496" y="246">Wiener Linien check</text>
+        <text class="out" x="496" y="268">report + sheet ready</text>
+
+        <rect class="node wait" x="710" y="200" width="190" height="86" rx="10"></rect>
+        <text class="id" x="726" y="224">Phase 2</text>
+        <text class="nm" x="726" y="246">Compare models (RQ2)</text>
+        <text class="out" x="726" y="268">after the experts</text>
+
+        <line class="edge" x1="210" y1="243" x2="248" y2="243" marker-end="url(#ar)"></line>
+        <line class="edge" x1="440" y1="243" x2="478" y2="243" marker-end="url(#ar)"></line>
+        <line class="edge" x1="670" y1="243" x2="708" y2="243" marker-end="url(#ar)"></line>
+      </svg>
+    </div>
+    <div class="legend" aria-label="Legend">
+      <span><i class="sw explore"></i>Looking at the data</span>
+      <span><i class="sw build"></i>Preparing the data</span>
+      <span><i class="sw analysis"></i>Main analysis</span>
+      <span><i class="sw wait"></i>Waiting (Phase 2 or experts)</span>
+    </div>
+    <figcaption>Arrows show the reading order. NB03, NB04 and NB05 all start from the datasets that NB02a builds. All 19 sensor groups are described in <a href="#groups">their own section</a>.</figcaption>
+  </figure>
+
+  <!-- NB01 -->
+  <section class="nb" id="nb01" aria-labelledby="h01">
+    <div class="nb-head">
+      <div class="tagrow"><span class="tag explore">Looking at the data</span><span class="file">01_data_exploration.ipynb</span></div>
+      <h2 id="h01">NB01 · Explore the raw data</h2>
+    </div>
+    <p class="question"><b>Question:</b> What is in the data, and what happens to the sensors when the train breaks down?</p>
+    <div class="cols">
+      <div>
+        <h3>Steps</h3>
+        <ol>
+          <li>Open the raw files: one row per second, about 22 million rows and 101 sensors.</li>
+          <li>Find the breakdowns and the maintenance days in the data.</li>
+          <li>Draw the sensors over the whole year.</li>
+        </ol>
+      </div>
+      <div>
+        <h3>Experiments and comparisons</h3>
+        <ul>
+          <li><b>Breakdown vs normal:</b> which sensors change most during a breakdown? The spring-brake pressure of car CW1 changes most.</li>
+          <li><b>Same group vs other groups:</b> sensors of the same part of the train move together more than sensors of different parts (checked with a shuffle test).</li>
+        </ul>
+      </div>
+    </div>
+    <div class="plots"><h3>Outputs and how to read them</h3>
+      <ul>
+        <li><span class="pn">Breakdown and maintenance timeline<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb01_timeline.png" alt="Breakdown and maintenance timeline" loading="lazy"></figure><span class="row read"><b>How to read:</b> the year runs left to right; each coloured bar is one recorded breakdown (by type) or one maintenance stay.</span><span class="row"><b>What it shows:</b> 21 breakdowns that come in waves: late summer and autumn 2024, then February to May 2025. 10 fall before the train/test split and 11 after it, although the test period is only about 4.5 months long. Maintenance happens roughly every 4 weeks (18 stays).</span><span class="row matters"><b>Why it matters:</b> The test months have more breakdowns per month than the training months, so the share of breakdown pieces is higher there (2.9% vs 1.3%). Every later comparison therefore uses a baseline from the same period.</span></li>
+        <li><span class="pn">Key sensors over the year<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb01_sensors.png" alt="Key sensors over the year" loading="lazy"></figure><span class="row read"><b>How to read:</b> hourly averages of a few important sensors; flat bands are normal operation, white gaps are days without data.</span><span class="row"><b>What it shows:</b> Levels are steady through 2024 and shift in 2025.</span><span class="row matters"><b>Why it matters:</b> The first visual hint of the 2025 change (drift) that NB03, NB04 and the air-system analysis in NB05 then measure.</span></li>
+        <li><span class="pn">Normal vs breakdown distributions<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb01_distributions.png" alt="Normal vs breakdown distributions" loading="lazy"></figure><span class="row read"><b>How to read:</b> for each sensor two histograms of the raw 1-second values (training months, maintenance removed): normal operation and inside a recorded breakdown. The further apart, the larger the effect (Cohen’s d).</span><span class="row"><b>What it shows:</b> The largest shifts are on the CW1 side: spring-brake pressure d = −1.5, main air-tank pressure −1.1 and load pressure −1.1, all lower during breakdowns.</span><span class="row matters"><b>Why it matters:</b> During breakdowns air pressure drops on the CW1 side. These sensors come back in the groups (FC7: CW1 spring-brake pressure, FC12: main air tanks).</span><span class="row caveat"><b>Careful:</b> These are values during a breakdown, not before it, so they say nothing yet about prediction.</span></li>
+        <li><span class="pn">Correlation matrix, ordered by documented sensor group<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb01_correlation.png" alt="Correlation matrix, ordered by documented sensor group" loading="lazy"></figure><span class="row read"><b>How to read:</b> a grid of all sensor pairs, sorted by the sensor groups in the MetroAT documentation; darker means the two sensors move together more strongly.</span><span class="row"><b>What it shows:</b> Average strength inside the documented groups: energy braking 0.98, brake 0.72, leveling 0.35, air supply 0.23; between groups only 0.10 to 0.26. A shuffle test gives p = 0.001.</span><span class="row matters"><b>Why it matters:</b> The structure of the train is visible in the data, which supports the idea of subsystem-aware features.</span><span class="row caveat"><b>Careful:</b> Not every group is tight: the air-supply sensors mix on/off signals with pressures and correlate weakly even among themselves.</span></li>
+      </ul></div>
+    <div class="learned"><h3>What the results mean</h3>
+      <ul>
+        <li><b>21 breakdowns, 13 of them brake:</b> brake problems dominate. With only 2 height-control breakdowns, nothing reliable can be said about that type.</li>
+        <li><b>10 training and 11 test breakdowns:</b> every later result rests on few events, so one breakdown more or less can change a number noticeably.</li>
+        <li><b>Spring-brake pressure changes most:</b> the spring brakes react strongly when something fails. That is why spring-brake sensors reappear in the reliable groups FC7 and FC8.</li>
+        <li><b>Sensors of one train part move together:</b> the train's structure is visible in the data, which supports the core idea of the thesis.</li>
+      </ul>
+      <p class="sum">In short: the data is suitable for the question, but there are few breakdowns, so results need careful checking.</p></div>
+  </section>
+
+  <!-- NB02a -->
+  <section class="nb" id="nb02a" aria-labelledby="h02a">
+    <div class="nb-head">
+      <div class="tagrow"><span class="tag build">Preparing the data</span><span class="file">02a_dataset_creation.ipynb</span></div>
+      <h2 id="h02a">NB02a · Build the datasets</h2>
+    </div>
+    <p class="question"><b>Question:</b> How do we turn one reading per second into something a computer can learn from?</p>
+    <div class="cols">
+      <div>
+        <h3>Steps</h3>
+        <ol>
+          <li>Cut the year into 6-minute pieces.</li>
+          <li>Summarise each piece: lowest, highest and average value of each sensor, and how often on/off signals switch.</li>
+          <li>Give each piece a label: does a breakdown start in the next 6.2 hours?</li>
+          <li>Also cut 23-minute clips for the second model type (the autoencoder).</li>
+          <li>Keep the official split: training months until 11 Feb 2025, test months after.</li>
+        </ol>
+      </div>
+      <div>
+        <h3>Experiments and comparisons</h3>
+        <ul>
+          <li><b>Our data vs Stefan's:</b> labels match 100%, so the comparison with his work is fair.</li>
+          <li><b>His code vs his thesis text:</b> the text says pieces during a breakdown were removed, the code keeps them. We follow the code, because it gives his published numbers.</li>
+          <li><b>Clip building aligned with his code:</b> prepared and tested, rebuilt in Phase 2.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="plots"><h3>Outputs and how to read them</h3>
+      <ul>
+        <li><span class="pn">Dataset summary<span class="kind">Table</span></span><span class="row read"><b>How to read:</b> the counts the notebook prints after building the datasets.</span><span class="row"><b>What it shows:</b> 41,375 training pieces (533 positive, 1.3%) and 23,147 test pieces (669 positive, 2.9%), 340 values each; 7,845 + 1,962 normal 23-minute clips for training the autoencoder and 5,374 test clips. The parquet files are byte-identical to the earlier NB02 run.</span><span class="row matters"><b>Why it matters:</b> With 1 to 3% positives, accuracy is meaningless (always saying "no breakdown" scores 97 to 99%), so the thesis reports F1, precision, recall and false-alarm rate.</span></li>
+      </ul></div>
+    <div class="learned"><h3>What the results mean</h3>
+      <ul>
+        <li><b>Labels match Stefan's 100%:</b> any difference to his results comes from the method, never from the data.</li>
+        <li><b>Only 1.3% (training) and 2.9% (test) of pieces are positive:</b> a model that always says "no breakdown" would be right about 98% of the time. That is why accuracy is useless here and the thesis uses F1, precision and recall.</li>
+        <li><b>Pieces during a breakdown count as positive:</b> part of the task is spotting a breakdown that is already happening, which is easier than predicting it. This is a limitation to state in the thesis.</li>
+      </ul>
+      <p class="sum">In short: 64,522 comparable pieces, built exactly like the earlier work, so the comparison in Phase 2 is fair.</p></div>
+  </section>
+
+  <!-- NB02b -->
+  <section class="nb" id="nb02b" aria-labelledby="h02b">
+    <div class="nb-head">
+      <div class="tagrow"><span class="tag wait">Waiting for Phase 2</span><span class="file">02b_baselines.ipynb</span></div>
+      <h2 id="h02b">NB02b · The old models (baseline)</h2>
+    </div>
+    <p class="question"><b>Question:</b> How well do the models from earlier work predict breakdowns when they see all sensors at once?</p>
+    <div class="cols">
+      <div>
+        <h3>Steps</h3>
+        <ol>
+          <li><b>Random Forest:</b> learns from labelled examples. Tries 432 settings and keeps the best.</li>
+          <li><b>Autoencoder:</b> learns what normal looks like and raises an alarm when it cannot reproduce a clip.</li>
+          <li>Score every test piece, in three ways: raw, smoothed using the past only, and smoothed using past and future (Stefan's way).</li>
+        </ol>
+      </div>
+      <div>
+        <h3>Experiments and comparisons</h3>
+        <ul>
+          <li><b>Rebuilding Stefan's score of 0.21</b> (1.0 = perfect): raw scores give 0.13, his smoothing gives 0.17, a fair smoothing that only uses the past gives 0.11.</li>
+          <li>His smoothing looks into the future, which a real train could never do. So the honest baseline is about 0.11 to 0.13.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="plots"><h3>Outputs and how to read them</h3>
+      <ul>
+        <li><span class="pn">Rebuilding the published score (check run, not the notebook itself)<span class="kind">Table</span></span><span class="row read"><b>How to read:</b> the same Random Forest settings as Helm, scored three ways on the test months up to 1 June.</span><span class="row"><b>What it shows:</b> Raw scores F1 = 0.126, Helm’s two-sided smoothing 0.165 (Helm: 0.206), causal smoothing that only looks back 0.109.</span><span class="row matters"><b>Why it matters:</b> Most of the gap between our 0.12 and the published 0.21 comes from smoothing that uses future scores, which a train in service cannot do. The honest baseline is about 0.11 to 0.13.</span></li>
+        <li><span class="pn">Score timelines and training curve<span class="kind">Plot</span></span><span class="row read"><b>How to read:</b> alarm score of each model over the test months with the alarm line and breakdowns, and the autoencoder’s training curve.</span><span class="row"><b>What it shows:</b> Produced when the notebook runs in Phase 2.</span><span class="row matters"><b>Why it matters:</b> Will show where the old models raise alarms and how many of them are false.</span></li>
+      </ul></div>
+    <div class="learned"><h3>What the results mean</h3>
+      <ul>
+        <li><b>0.21 needs smoothing that looks into the future:</b> the published number cannot be reached by a system running on a real train.</li>
+        <li><b>An honest score of about 0.11 to 0.13:</b> of all alarms, only about 1 in 9 is correct, and most breakdown pieces are missed. This is the false-alarm problem from the proposal in numbers.</li>
+        <li><b>The bar for Phase 2:</b> the subsystem models have to beat this honest score, measured in exactly the same way.</li>
+      </ul>
+      <p class="sum">In short: the baseline is weaker than published, and the thesis compares against the honest version.</p></div>
+  </section>
+
+  <!-- NB03 -->
+  <section class="nb" id="nb03" aria-labelledby="h03">
+    <div class="nb-head">
+      <div class="tagrow"><span class="tag explore">Looking at the data</span><span class="file">03_dataset_analysis.ipynb</span></div>
+      <h2 id="h03">NB03 · Explore the prepared datasets</h2>
+    </div>
+    <p class="question"><b>Question:</b> Do the training and test months look the same, and where do the old models raise alarms?</p>
+    <div class="cols">
+      <div>
+        <h3>Steps</h3>
+        <ol>
+          <li>Plot the old models' alarm scores over the whole year.</li>
+          <li>Find long alarm stretches (several pieces in a row above the alarm line).</li>
+          <li>Check which values separate breakdown from normal, in each period separately.</li>
+        </ol>
+      </div>
+      <div>
+        <h3>Experiments and comparisons</h3>
+        <ul>
+          <li><b>Training vs test months:</b> the autoencoder's error on normal data rises from 0.54 to 0.77. The train behaves differently in 2025 (drift).</li>
+          <li><b>Long alarms vs real breakdowns:</b> Random Forest 186 long alarms, 27 real; autoencoder 554, only 10 real.</li>
+          <li><b>Average vs total of a piece:</b> almost the same information (0.89), so NB04 drops the totals.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="plots"><h3>Outputs and how to read them</h3>
+      <ul>
+        <li><span class="pn">Model scores over the whole year<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_scores_year.png" alt="Model scores over the whole year" loading="lazy"></figure><span class="row read"><b>How to read:</b> top: Random Forest probability per piece, bottom: autoencoder error per piece; the dashed line is the train/test split.</span><span class="row"><b>What it shows:</b> The autoencoder error jumps up from about April 2025 and stays high. The Random Forest looks calmer on the training months.</span><span class="row matters"><b>Why it matters:</b> The autoencoder learned 2024’s "normal" and sees much of 2025 as unusual: drift in one picture.</span><span class="row caveat"><b>Careful:</b> Random Forest scores on the training months are in-sample (it learned from them), so they look better than they would on new data.</span></li>
+        <li><span class="pn">Training vs test months, and month by month<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_train_test.png" alt="Training vs test months, and month by month" loading="lazy"></figure><span class="row read"><b>How to read:</b> score distributions of both periods side by side, plus one box per month.</span><span class="row"><b>What it shows:</b> Autoencoder error on normal pieces: 0.539 in training, 0.774 in test. Random Forest pieces above its threshold: 3.43% vs 3.80%.</span><span class="row matters"><b>Why it matters:</b> The autoencoder is hit much harder by the 2025 change than the Random Forest, which explains its many false alarms.</span></li>
+        <li><span class="pn">Long alarm stretches (hotspots)<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_hotspots.png" alt="Long alarm stretches (hotspots)" loading="lazy"></figure><span class="row read"><b>How to read:</b> each coloured span is a stretch of at least 3 (Random Forest) or 2 (autoencoder) pieces in a row above the alarm line; green overlaps a recorded breakdown, purple does not.</span><span class="row"><b>What it shows:</b> Random Forest: 186 stretches, 27 real (15%). Autoencoder: 554 stretches, only 10 real (2%), most of them in 2025.</span><span class="row matters"><b>Why it matters:</b> Even long, persistent alarms are mostly false. This is the false-alarm problem (P1 of the proposal) in numbers.</span></li>
+        <li><span class="pn">Separating power per feature and per sensor group<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_separation.png" alt="Separating power per feature and per sensor group" loading="lazy"></figure><span class="row read"><b>How to read:</b> left: the 25 values that differ most between breakdown and normal; right: average per documented group. Each value is measured in both periods and the smaller effect is kept, so drift cannot inflate it.</span><span class="row"><b>What it shows:</b> 234 of 340 values separate breakdown from normal in both periods (d > 0.3). Average by group: brake 0.50, context 0.34, leveling 0.31, energy braking 0.17, air supply 0.16. Pooled over both periods 268 would pass, 34 of them only because of drift.</span><span class="row matters"><b>Why it matters:</b> There is real information in the data, mostly in the brake values.</span></li>
+        <li><span class="pn">Correlation inside groups: normal vs breakdown, per period<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_within_group.png" alt="Correlation inside groups: normal vs breakdown, per period" loading="lazy"></figure><span class="row read"><b>How to read:</b> bars per documented group: how strongly different sensors of the group move together in normal and breakdown pieces, separately for training and test months.</span><span class="row"><b>What it shows:</b> Inside groups 0.565, across groups 0.236 (2.4×). During training-period breakdowns brake sensors lose their coordination (0.61 to 0.37), in the test period hardly (0.54 to 0.51).</span><span class="row matters"><b>Why it matters:</b> Sensors that stop moving together can be a breakdown signature, but here it is not stable across periods.</span><span class="row caveat"><b>Careful:</b> Few breakdowns per period, so these numbers rest on small samples.</span></li>
+        <li><span class="pn">Summary statistics: which ones carry the information<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_aggregation.png" alt="Summary statistics: which ones carry the information" loading="lazy"><img src="figs/nb03_per_sensor.png" alt="Summary statistics: which ones carry the information" loading="lazy"></figure><span class="row read"><b>How to read:</b> top: average correlation between the summary types (lowest, highest, average, total, switches, seconds on) over all sensors; bottom: six example sensors.</span><span class="row"><b>What it shows:</b> Average and total are nearly the same (0.89, median 0.97). The statistic that separates breakdowns best is the lowest value for 40% of sensors, the highest for 29%, switches 15%, seconds on 7%, total 5%, average 3%.</span><span class="row matters"><b>Why it matters:</b> Lowest and highest values carry most of the breakdown information, which is what the supervisor asked to use ("use max and min"). The totals are dropped in NB04.</span></li>
+        <li><span class="pn">Scaling check of the autoencoder input<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_standardisation.png" alt="Scaling check of the autoencoder input" loading="lazy"></figure><span class="row read"><b>How to read:</b> mean and spread of every channel after scaling; ideal values are 0 and 1.</span><span class="row"><b>What it shows:</b> Mean −0.01, spread 0.98, no channel is (nearly) constant.</span><span class="row matters"><b>Why it matters:</b> The autoencoder input is correctly scaled. An earlier warning about 12 off-centre channels came from sampling only June 2024.</span></li>
+        <li><span class="pn">Pieces per day<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_coverage.png" alt="Pieces per day" loading="lazy"></figure><span class="row read"><b>How to read:</b> number of 6-minute pieces per day, with the daily Random Forest score below.</span><span class="row"><b>What it shows:</b> About 178 pieces per day (median 196); 571 breaks of more than an hour (360 training, 211 test), median 2.8 h, longest 6.9 days.</span><span class="row matters"><b>Why it matters:</b> The train does not run around the clock, so gaps in the data are normal. Later analyses never draw lines across them and treat them explicitly.</span></li>
+        <li><span class="pn">Time of day<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_hour.png" alt="Time of day" loading="lazy"></figure><span class="row read"><b>How to read:</b> left: average Random Forest probability per hour; right: share of breakdown pieces per hour.</span><span class="row"><b>What it shows:</b> Both peak between 2 and 8 in the morning: probability about 0.12 vs 0.05 during the day, breakdown share 3 to 4% vs 1 to 1.5%.</span><span class="row matters"><b>Why it matters:</b> Breakdowns are often active over night or at the morning start, when the train stands. The model may partly learn "night = risky" instead of a technical fault.</span><span class="row caveat"><b>Careful:</b> Time of day is a confounder to keep in mind for Phase 2.</span></li>
+      </ul></div>
+    <div class="learned"><h3>What the results mean</h3>
+      <ul>
+        <li><b>Autoencoder error rises from 0.54 to 0.77:</b> the model learned what "normal" looked like in 2024 and sees much of 2025 as unusual. That explains many of its false alarms.</li>
+        <li><b>Only 27 of 186 long Random Forest alarms are real:</b> about 1 in 7. A maintenance team would soon stop trusting such alarms.</li>
+        <li><b>234 of 340 values separate breakdown from normal in both periods:</b> there is real information in the data, so a better way of using it can help.</li>
+        <li><b>Average and total carry the same information:</b> removing the totals avoids counting the same thing twice.</li>
+      </ul>
+      <p class="sum">In short: the signal is there, but false alarms and the change in 2025 are the two big problems, so every later comparison is made within one period.</p></div>
+  </section>
+
+  <!-- NB04 -->
+  <section class="nb" id="nb04" aria-labelledby="h04">
+    <div class="nb-head">
+      <div class="tagrow"><span class="tag analysis">Main analysis</span><span class="file">04_anomaly_detection_cluster_analysis.ipynb</span></div>
+      <h2 id="h04">NB04 · Find groups of sensors that misbehave together</h2>
+    </div>
+    <p class="question"><b>Question:</b> Which sensors go wrong at the same time, and how do these groups behave around breakdowns?</p>
+    <div class="cols">
+      <div>
+        <h3>Steps</h3>
+        <ol>
+          <li>Mark a piece as unusual when at least 5 values are far outside their normal range: 12,022 pieces.</li>
+          <li>Keep only the training months for building the groups: 5,351 pieces. The test months stay hidden.</li>
+          <li>Put sensor values that are usually unusual together into one group: 19 groups.</li>
+          <li>Use the fixed groups on the whole year to study the 21 breakdowns.</li>
+        </ol>
+      </div>
+      <div>
+        <h3>Experiments and comparisons</h3>
+        <ul>
+          <li><b>Different "unusual" rules:</b> 30 combinations of thresholds tried.</li>
+          <li><b>Two grouping methods:</b> they agree on 87% of sensor pairs.</li>
+          <li><b>With vs without test months:</b> using them gave 31 groups, partly made by 2025 behaviour; without them, 19 cleaner groups.</li>
+          <li><b>Before vs during breakdowns:</b> no group warns days ahead; FC5 and FC7 warn a few hours ahead.</li>
+          <li><b>Breakdown days vs normal days:</b> FC2 and FC6 are busier on breakdown days in both periods.</li>
+          <li><b>Shakier values before breakdowns?</b> Only FC18, slightly (1.25×).</li>
+          <li><b>2024 vs 2025:</b> 9 groups are much busier in 2025 without breakdowns nearby.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="plots"><h3>Outputs and how to read them</h3>
+      <ul>
+        <li><span class="pn">How many values are unusual per piece<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb04_activation_count.png" alt="How many values are unusual per piece" loading="lazy"></figure><span class="row read"><b>How to read:</b> left: histogram of the number of unusual values (|z| > 3) per piece, normal vs breakdown pieces; the green line is the rule "at least 5". Right: the same number over the year, red = unusual pieces.</span><span class="row"><b>What it shows:</b> Breakdown pieces have clearly more unusual values (long red tail). 12,022 of 64,522 pieces (18.6%) pass the rule. They contain 724 of the 1,202 breakdown pieces (60%). A constant band at about 11 unusual values runs through the whole year.</span><span class="row matters"><b>Why it matters:</b> Unusual pieces are linked to breakdowns, but 94% of them are not near one. The constant band probably reflects a recurring normal situation; FC1 (brakes held while standing, active all year) is a likely candidate.</span></li>
+        <li><span class="pn">Threshold heatmaps<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb04_thresholds.png" alt="Threshold heatmaps" loading="lazy"></figure><span class="row read"><b>How to read:</b> each cell is one combination of "how far from normal" (|z| from 2 to 4) and "how many values" (1 to 20); colours give the share of breakdown pieces caught, the share of pieces flagged and the precision.</span><span class="row"><b>What it shows:</b> 30 combinations. Strict rules flag few pieces but miss most breakdowns; loose rules catch more but flag huge parts of the data. The chosen setting (|z| > 3, at least 5) sits in the middle.</span><span class="row matters"><b>Why it matters:</b> The results do not depend on one lucky setting; the chosen one is a balanced compromise.</span></li>
+        <li><span class="pn">Monthly share of unusual pieces<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb04_monthly.png" alt="Monthly share of unusual pieces" loading="lazy"></figure><span class="row read"><b>How to read:</b> one line for all pieces, one for pieces far from any breakdown, month by month; dotted = split.</span><span class="row"><b>What it shows:</b> Far from breakdowns 10.9% of training pieces are unusual, 27.4% of test pieces, and 43% in June 2025.</span><span class="row matters"><b>Why it matters:</b> Something changes in 2025 that has nothing to do with single breakdowns. NB05’s air-system analysis suggests part of it is real wear and a repair in April 2025.</span></li>
+        <li><span class="pn">Statistical association: unusual pieces vs breakdowns<span class="kind">Plot + table</span></span><figure class="pf"><img src="figs/nb04_association.png" alt="Statistical association: unusual pieces vs breakdowns" loading="lazy"></figure><span class="row read"><b>How to read:</b> left: share of breakdown pieces among unusual and normal pieces; right: the same for each group, with the 6.0% average as a line.</span><span class="row"><b>What it shows:</b> Unusual pieces: 6.0% breakdown pieces, others 0.91% (odds ratio 7.0, Fisher p < 10⁻²⁰⁰). Per group: FC7 62.7% (odds ratio 29.5), FC8 33.9% (9.0), FC6 22.0% (6.2), FC5 15.4% (3.0); 14 of 19 groups significant. FC1, FC4, FC10 and FC15 are not; FC1 (4.8%) and FC15 (3.7%) are even below average.</span><span class="row matters"><b>Why it matters:</b> Most groups are linked to breakdowns, and the strongest links are exactly FC7, FC8 and FC5, the groups that later hold on the test breakdowns.</span><span class="row caveat"><b>Careful:</b> Neighbouring pieces are not independent, so these p-values are too small. The event-level tests in NB04 §4.3 and NB05 are the more honest ones.</span></li>
+        <li><span class="pn">Co-activation of the 40 most frequent values<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb04_coactivation_top40.png" alt="Co-activation of the 40 most frequent values" loading="lazy"></figure><span class="row read"><b>How to read:</b> a grid of the 40 most often unusual values; bright cells mean two values are often unusual together (Jaccard similarity, 1 = always together).</span><span class="row"><b>What it shows:</b> Bright blocks already appear by eye, for example the brake-cylinder values of all cars.</span><span class="row matters"><b>Why it matters:</b> The groups exist in the data before any clustering is run; the clustering only makes them exact.</span></li>
+        <li><span class="pn">Co-activation ordered by group<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb04_coactivation.png" alt="Co-activation ordered by group" loading="lazy"></figure><span class="row read"><b>How to read:</b> the same grid for all 126 values, sorted by group; blue lines mark group borders.</span><span class="row"><b>What it shows:</b> Bright squares along the diagonal, one per group, with little brightness outside them.</span><span class="row matters"><b>Why it matters:</b> The cut at distance 0.7 separates the groups cleanly.</span></li>
+        <li><span class="pn">Same-sensor redundancy<span class="kind">Table</span></span><span class="row read"><b>How to read:</b> for each group: how many of its values come from different sensors and how many are just other statistics of the same sensor.</span><span class="row"><b>What it shows:</b> 15 groups combine several sensors; only FC13 is one sensor (MW3 load pressure, bogie 1) seen through three statistics. FC6, for example, has 19 values from 10 sensors.</span><span class="row matters"><b>Why it matters:</b> The groups are real cross-sensor patterns, not the same sensor counted several times. This answers the supervisor’s question why several statistics of one sensor appear.</span></li>
+        <li><span class="pn">Group tightness<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb04_cohesion.png" alt="Group tightness" loading="lazy"></figure><span class="row read"><b>How to read:</b> one bar per multi-sensor group: how often its values are unusual together (mean Jaccard, 1 = always); colour = breakdown share; labels give size and share.</span><span class="row"><b>What it shows:</b> All 16 multi-value groups above 0.3, ten above 0.5, mean 0.63; FC1 is almost perfectly tight.</span><span class="row matters"><b>Why it matters:</b> None of the groups is a loose collection.</span></li>
+        <li><span class="pn">Heuristic experiment: Jaccard (A) vs correlation (B) clustering<span class="kind">Plot + table</span></span><figure class="pf"><img src="figs/nb04_heuristics.png" alt="Heuristic experiment: Jaccard (A) vs correlation (B) clustering" loading="lazy"></figure><span class="row read"><b>How to read:</b> top left: how much the two methods agree (1 = identical, dashed = random); top right: breakdown share of each group under A and B; bottom left: tightness (silhouette) on the own and on the other method’s distance; bottom right: best group and spread of breakdown shares.</span><span class="row"><b>What it shows:</b> B finds 13 groups, A 19. They put 87% of value pairs the same way (NMI 0.77, ARI 0.46). Tightness is similar on the own distance (0.55 vs 0.53), but A’s groups also hold up on B’s distance (0.47) while B’s do not on A’s (0.26). A’s best group has 62.7% breakdown pieces, B’s only 14.7%; spread 13.1 vs 3.3 points.</span><span class="row matters"><b>Why it matters:</b> Both methods find largely the same structure, so the groups are not an artefact of one method. A is kept because it separates breakdown-prone from harmless groups much better: B merges FC7 and FC8 into larger groups and their signal disappears.</span><span class="row caveat"><b>Careful:</b> ARI 0.46 is only moderate agreement: the fine borders between groups depend on the method, the big blocks do not.</span></li>
+        <li><span class="pn">Binary vs continuous<span class="kind">Plot + table</span></span><figure class="pf"><img src="figs/nb04_binary_continuous.png" alt="Binary vs continuous" loading="lazy"></figure><span class="row read"><b>How to read:</b> each dot is a group: x = tightness in the 0/1 "unusual" view, y = correlation of the real values; the diagonal is perfect agreement.</span><span class="row"><b>What it shows:</b> All 16 groups are above 0.3 on both measures (16/16 agree). Across groups the two measures correlate only weakly (r = 0.31, p = 0.24).</span><span class="row matters"><b>Why it matters:</b> Turning values into "unusual / not unusual" keeps which sensors belong together.</span><span class="row caveat"><b>Careful:</b> With 16 groups the cross-group correlation is too weak to prove more than that.</span></li>
+        <li><span class="pn">Operating state per group<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb04_opstate.png" alt="Operating state per group" loading="lazy"></figure><span class="row read"><b>How to read:</b> left: for each group the share of its activity while standing, at low speed and while moving (red border = linked to breakdowns); right: average for linked vs not-linked groups.</span><span class="row"><b>What it shows:</b> FC1, FC2, FC6, FC12 almost only while standing; FC7 88% and FC8 92% standing; FC5 mostly moving; FC10 and FC15 mostly moving. Linked groups: 55% standing; not-linked groups: 53% moving.</span><span class="row matters"><b>Why it matters:</b> Groups that are not linked to breakdowns fire while driving, which fits normal driving patterns. A spring brake is applied by releasing air, so low spring-brake pressure while standing (FC7, FC8) can be the parking brake.</span><span class="row caveat"><b>Careful:</b> Standing also includes a train parked because of a breakdown, so "standing" does not mean "harmless".</span></li>
+        <li><span class="pn">Activity before and during breakdowns<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb04_phases.png" alt="Activity before and during breakdowns" loading="lazy"></figure><span class="row read"><b>How to read:</b> left: rows are groups, columns are 6 to 1 days before, the last 24 h and during a breakdown; numbers are activity relative to normal in the same period (red = more). Right: breakdowns with activity in the last 24 h (bar) vs expected by chance (black mark).</span><span class="row"><b>What it shows:</b> The "during" column is dark red for almost every group (FC7 195×, FC8 49×). Days 6 to 1 stay near 1. In the last 24 h FC7 is 17× and FC14, FC17, FC18 about 5×, but only FC5 (15 of 21 vs 8) and FC7 (6 vs 1.7) beat chance at event level.</span><span class="row matters"><b>Why it matters:</b> The groups mostly react to breakdowns that are already happening; two give a warning a few hours ahead; none warns days ahead.</span></li>
+        <li><span class="pn">Example traces around a breakdown<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb04_examples.png" alt="Example traces around a breakdown" loading="lazy"></figure><span class="row read"><b>How to read:</b> the values of one group around one real breakdown; shaded = last 24 h and breakdown, markers = pieces where the group fires.</span><span class="row"><b>What it shows:</b> Shows what "warns a few hours ahead" and "fires during the breakdown" look like on real data.</span><span class="row matters"><b>Why it matters:</b> Makes the patterns concrete for the expert discussion.</span></li>
+        <li><span class="pn">Breakdown days vs normal days<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb04_days.png" alt="Breakdown days vs normal days" loading="lazy"></figure><span class="row read"><b>How to read:</b> left: activity of each group on breakdown days vs normal days; right: the difference (red = busier on breakdown days), split by period in the table below it.</span><span class="row"><b>What it shows:</b> Pooled: FC18 +27.5 points, FC6 +11.0, FC14 +10.9. Split by period, only FC2 and FC6 are busier in both; FC18 comes almost only from the training months (+46 vs +4).</span><span class="row matters"><b>Why it matters:</b> Pooling both periods would have made FC18 look like a strong breakdown-day signal; splitting by period shows it is not stable.</span></li>
+        <li><span class="pn">Variation before breakdowns (volatility)<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb04_volatility.png" alt="Variation before breakdowns (volatility)" loading="lazy"></figure><span class="row read"><b>How to read:</b> for 6 breakdown-linked groups: within-day variation in the 7 days before onset relative to normal days of the same period (1 = normal); the band shows the spread over breakdowns.</span><span class="row"><b>What it shows:</b> Most lines stay around 1 to 1.3 with wide bands. Only FC18 rises steadily (1.25×, trend τ = 0.71, p = 0.03); FC2 jumps only on the breakdown day (1.55×).</span><span class="row matters"><b>Why it matters:</b> Rising variation is not a general warning sign on this train. An earlier "2.96× ramp-up" result was a bug and is not used.</span></li>
+        <li><span class="pn">Activity far from breakdowns, 2024 vs 2025<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb04_drift.png" alt="Activity far from breakdowns, 2024 vs 2025" loading="lazy"></figure><span class="row read"><b>How to read:</b> each group’s activity in quiet times, training months vs test months.</span><span class="row"><b>What it shows:</b> 9 groups are at least twice as active in 2025 without breakdowns nearby; FC10 goes from 0.2% to 6.6%.</span><span class="row matters"><b>Why it matters:</b> These groups follow the 2025 change rather than breakdowns and are flagged in every later table.</span></li>
+      </ul></div>
+    <div class="learned"><h3>What the results mean</h3>
+      <ul>
+        <li><b>12,022 unusual pieces contain 60% of the breakdown pieces:</b> unusual behaviour is linked to breakdowns. But 94% of the unusual pieces are not near a breakdown, so "unusual" alone would give far too many alarms.</li>
+        <li><b>19 groups, 87% agreement between two methods:</b> the groups are not a side effect of one particular method.</li>
+        <li><b>31 groups with the test months, 19 without:</b> letting the test months help would have leaked information. The 19 groups are the honest ones.</li>
+        <li><b>No warning days ahead, FC5 and FC7 hours ahead:</b> the realistic goal is a short-term warning. A few hours can still be enough to take a train out of service.</li>
+        <li><b>FC2 and FC6 busier on breakdown days in both periods:</b> stable groups for recognising a breakdown, less for predicting it.</li>
+        <li><b>Only FC18 gets shakier before breakdowns:</b> rising variation is not a general warning sign on this train.</li>
+        <li><b>9 groups react to 2025:</b> these groups may follow the changed behaviour of the train rather than breakdowns, so they need extra care.</li>
+      </ul>
+      <p class="sum">In short: the computer found meaningful sensor groups on its own; they mostly recognise breakdowns, and two warn a few hours ahead. Every group with its features is described <a href="#groups">below</a>. A simpler diagram of this notebook is <a href="https://claude.ai/artifact/3UqaQVX6qUV1A6Qo7h5Cws">on its own page</a>.</p></div>
+  </section>
+
+  <!-- NB05 -->
+  <section class="nb" id="nb05" aria-labelledby="h05">
+    <div class="nb-head">
+      <div class="tagrow"><span class="tag analysis">Main analysis</span><span class="file">05_pattern_discovery_validation.ipynb</span></div>
+      <h2 id="h05">NB05 · Check the groups and explain them</h2>
+    </div>
+    <p class="question"><b>Question:</b> Which groups really point to breakdowns, and what is physically going on behind them?</p>
+    <div class="cols">
+      <div>
+        <h3>Steps</h3>
+        <ol>
+          <li>Treat each group as an alarm and count correct warnings and false alarms.</li>
+          <li>Decide KEEP or REVIEW using only the 10 training breakdowns.</li>
+          <li>Check the decision on the 11 hidden test breakdowns.</li>
+          <li>Show the values and the raw 1-second signals behind the groups.</li>
+          <li>Calculate how the air system behaves every day of the year.</li>
+          <li>Prepare the report and the sheet for the experts.</li>
+        </ol>
+      </div>
+      <div>
+        <h3>Experiments and comparisons</h3>
+        <ul>
+          <li><b>Training vs hidden breakdowns:</b> 15 groups pass on training, only 3 hold on the hidden ones: FC7, FC5, FC8.</li>
+          <li><b>Correct vs false alarms of the old models:</b> FC2, FC6 and FC18 sit behind most false alarms.</li>
+          <li><b>Normal vs unusual values:</b> in FC7 and FC8 the spring-brake pressure falls to about 0; in FC5 the compressor switches 4 times per piece instead of 0 to 1.</li>
+          <li><b>Raw signals:</b> before one brake breakdown, two CW1 sensors drop to 0 together. Real pressure loss or a signal problem? A question for the experts.</li>
+          <li><b>Old model vs groups:</b> the Random Forest puts only 2.4% of its attention on the 3 reliable groups.</li>
+          <li><b>Air system over the year:</b> pressure loss when standing grows every month; one compressor side weakens until a repair in April 2025, then the other side weakens.</li>
+          <li><b>Days before breakdowns vs normal days:</b> the air values show no clear change in the last 3 days.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="plots"><h3>Outputs and how to read them</h3>
+      <ul>
+        <li><span class="pn">Group overview<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb05_overview.png" alt="Group overview" loading="lazy"></figure><span class="row read"><b>How to read:</b> three panels: number of values per group, how often each group fires, and its breakdown share (red = more than twice the average).</span><span class="row"><b>What it shows:</b> Groups range from 1 to 19 values. The most frequent groups (FC19, FC2, FC1) have low to moderate breakdown shares (7.7%, 10.1% and 4.8%, against a 6.0% average); the rare groups FC7 and FC8 have by far the highest (62.7% and 33.9%).</span><span class="row matters"><b>Why it matters:</b> Frequent groups describe everyday operation, rare groups the special situations; the rare ones are where breakdown information sits.</span></li>
+        <li><span class="pn">Group scorecard<span class="kind">Plot + table</span></span><figure class="pf"><img src="figs/nb05_scorecard.png" alt="Group scorecard" loading="lazy"></figure><span class="row read"><b>How to read:</b> each dot is a group used as an alarm: right = covers more breakdowns, up = beats chance more clearly (lift), black edge = KEEP on the training breakdowns, colour = timing pattern.</span><span class="row"><b>What it shows:</b> KEEP on training: 15 of 19. On the hidden test breakdowns only FC7 (lift 4.4 / 2.4, 1 false alarm), FC5 (3.7 / 1.9, 5 false alarms) and FC8 (2.5 / 1.5, 14) hold. FC19 has 453 false alarms, FC1 421. A minimum alarm length of 2 pieces cuts false alarms from 6,283 to 2,663.</span><span class="row matters"><b>Why it matters:</b> Most groups that look useful on the training breakdowns do not carry over. FC5, FC7 and FC8 are the trustworthy candidates.</span><span class="row caveat"><b>Careful:</b> 42% of test pieces lie near a breakdown, so test lift cannot exceed about 2.4 and the check is strict.</span></li>
+        <li><span class="pn">Groups behind the old models’ alarms<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb05_prior_alarms.png" alt="Groups behind the old models’ alarms" loading="lazy"></figure><span class="row read"><b>How to read:</b> two bars per group: how often it is active during the old model’s correct early warnings (green) and during its false alarms (red); labels mark significant differences.</span><span class="row"><b>What it shows:</b> Random Forest: 11 of 11 test breakdowns warned early, 109 false-alarm episodes; FC2, FC6 and FC18 sit behind its false alarms, FC1, FC14 and FC17 behind its correct warnings. Autoencoder: 10 of 11, 209 false alarms.</span><span class="row matters"><b>Why it matters:</b> If the experts confirm that FC2, FC6 and FC18 are normal situations, leaving them out could cut false alarms, which is what RQ2 tests.</span><span class="row caveat"><b>Careful:</b> Based on the current untuned Random Forest; re-run after NB02b.</span></li>
+        <li><span class="pn">Groups by breakdown type<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb05_failure_type.png" alt="Groups by breakdown type" loading="lazy"></figure><span class="row read"><b>How to read:</b> rows are groups, columns are brake, compressor and height-control breakdowns; darker = more active around that type than in normal operation.</span><span class="row"><b>What it shows:</b> FC7 is strongly type-specific: 62× more active around brake breakdowns, only 3× around compressor breakdowns. FC5, although it is a compressor signal, is about equally active around brake (4.2×) and compressor breakdowns (4.0×), and highest around the two height-control breakdowns (10.4×). FC8 leans towards brake breakdowns (11.6×).</span><span class="row matters"><b>Why it matters:</b> A first hint which part of the train a group might belong to, as evidence for the experts.</span><span class="row caveat"><b>Careful:</b> Only 6 compressor and 2 height-control breakdowns: these columns are fragile.</span></li>
+        <li><span class="pn">Activation timeline<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb05_timeline.png" alt="Activation timeline" loading="lazy"></figure><span class="row read"><b>How to read:</b> one row per group, a dot for every piece where it fires; red = breakdowns, gold = 6 to 1 days before, dashed = split.</span><span class="row"><b>What it shows:</b> FC1 fires all year long, independent of breakdowns. FC2 starts in September 2024. FC3, FC4, FC5, FC9 and FC10 become dense after March 2025.</span><span class="row matters"><b>Why it matters:</b> Shows at a glance which groups are everyday background and which follow the 2025 change.</span></li>
+        <li><span class="pn">Deep dives into FC7 and FC8<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb05_deep_fc7.png" alt="Deep dives into FC7 and FC8" loading="lazy"><img src="figs/nb05_deep_fc8.png" alt="Deep dives into FC7 and FC8" loading="lazy"></figure><span class="row read"><b>How to read:</b> daily average and spread of each group’s top values over the whole year; red = breakdowns.</span><span class="row"><b>What it shows:</b> The spring-brake values stay in a stable band most of the year and drop sharply around several breakdowns (late August and early October 2024, February and June 2025), but not around every one.</span><span class="row matters"><b>Why it matters:</b> FC7 and FC8 react to some breakdowns sharply rather than following a slow trend, which fits their role as short-term signals.</span></li>
+        <li><span class="pn">Top-10 values with numbers<span class="kind">Table</span></span><span class="row read"><b>How to read:</b> for each group its 10 most often unusual values, with the normal range from the training months and the typical value when the group fires.</span><span class="row"><b>What it shows:</b> FC5: compressor switches 4 times per piece instead of 0 to 1 (+5.6 std). FC7: CW1 spring-brake pressure falls from about 0.66 to 0 (−4.3 std). FC8: spring-brake pressure falls to 0 to 0.2 in MW4, MW2, MW3, MW1 (−2 to −4 std). FC12: main air tanks −6 std.</span><span class="row matters"><b>Why it matters:</b> Gives the experts real values to judge instead of abstract scores.</span><span class="row caveat"><b>Careful:</b> Values are in the scaled units of the public dataset, so the size of the shift (std) is easier to compare than the raw numbers.</span></li>
+        <li><span class="pn">Raw 1-second signals<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb05_raw_fc5.png" alt="Raw 1-second signals" loading="lazy"><img src="figs/nb05_raw_fc7.png" alt="Raw 1-second signals" loading="lazy"><img src="figs/nb05_raw_fc8.png" alt="Raw 1-second signals" loading="lazy"></figure><span class="row read"><b>How to read:</b> the original signals in the day before one breakdown each; orange marks = pieces where the group fires, red = breakdown, gaps = no data.</span><span class="row"><b>What it shows:</b> FC5: compressor switches rise from 0 to 2 up to 9 to 12 per 10 minutes before the breakdown. FC7: both CW1 sensors drop to 0 together, starting about 4 h before. FC8: four spring-brake pressures drop together in the morning before the breakdown.</span><span class="row matters"><b>Why it matters:</b> Back-calculation to the underlying values: the groups are visible in the raw signals, not only in the summaries.</span><span class="row caveat"><b>Careful:</b> One breakdown per group only; these are examples, not proof.</span></li>
+        <li><span class="pn">The old model’s attention per group<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb05_rf_importance.png" alt="The old model’s attention per group" loading="lazy"></figure><span class="row read"><b>How to read:</b> one bar per group: how much the Random Forest relies on its values; green = the 3 reliable groups, grey = outside the groups.</span><span class="row"><b>What it shows:</b> 54% of its attention is on group values (FC18 18%, FC6 10%, FC14 8%), 27% on values outside any group, 16% on the totals and 3% on context such as days since the last breakdown. The 3 reliable groups get 2.4%.</span><span class="row matters"><b>Why it matters:</b> The old model mostly ignores the most trustworthy signals: a direct reason to try subsystem-aware features in Phase 2.</span></li>
+        <li><span class="pn">Air system over the year<span class="kind">Plot + table</span></span><figure class="pf"><img src="figs/nb05_air_system.png" alt="Air system over the year" loading="lazy"></figure><span class="row read"><b>How to read:</b> four panels computed from the raw data per day: compressor on-share, starts per hour, fill speed and pressure loss while standing; CW1 solid, CW2 dashed; breakdowns as lines, maintenance in green.</span><span class="row"><b>What it shows:</b> Pressure loss while standing rises every training month, 0.0009 to 0.0046 per minute (Kendall τ = 1.0 on monthly values, p < 0.001). CW2 fills more slowly from September (0.0088 to 0.0043, τ = −0.83) while its compressor runs more (0.33 to 0.40). After the 17 to 22 April 2025 revision CW2 recovers (fill 0.0038 to 0.0139) and CW1 gets worse (0.0118 to 0.0074).</span><span class="row matters"><b>Why it matters:</b> The 2025 change may partly be real wear and a repair rather than noise, matching the "baseline shift after 17 April 2025" in the earlier paper. A monitoring system should also watch slow trends over months.</span><span class="row caveat"><b>Careful:</b> Pressures are scaled, and the two sides share air, so side-specific values are not fully independent.</span></li>
+        <li><span class="pn">Average profile around breakdowns<span class="kind">Plot + table</span></span><figure class="pf"><img src="figs/nb05_profiles.png" alt="Average profile around breakdowns" loading="lazy"></figure><span class="row read"><b>How to read:</b> all breakdowns of one type lined up at day 0; thin lines = single breakdowns, thick line = average change against each breakdown’s own baseline (green days), band = bootstrap uncertainty.</span><span class="row"><b>What it shows:</b> No quantity changes consistently in the last 3 days for any type after correcting for multiple tests. Closest: FC5 activity before brake breakdowns (p = 0.005, q = 0.05). Compressor breakdowns: compressor on-share −0.08 (p = 0.06).</span><span class="row matters"><b>Why it matters:</b> The air system shows slow wear over months, not a countdown in the days before each breakdown.</span><span class="row caveat"><b>Careful:</b> Only 13, 6 and 2 breakdowns per type, so small changes cannot be detected.</span></li>
+      </ul></div>
+    <div class="learned"><h3>What the results mean</h3>
+      <ul>
+        <li><b>15 groups pass on training, 3 hold on the hidden breakdowns:</b> most patterns do not carry over to new breakdowns. FC5, FC7 and FC8 are the most trustworthy candidates for the subsystem datasets.</li>
+        <li><b>The hidden-test check is strict:</b> 42% of test pieces lie near a breakdown, so failing it does not prove a group useless. The experts make the final call.</li>
+        <li><b>FC2, FC6 and FC18 sit behind false alarms:</b> they may be normal operating situations. If the experts confirm this, leaving them out could reduce false alarms, which is exactly what RQ2 tests.</li>
+        <li><b>Spring-brake pressure falling to about 0:</b> a very strong deviation, but FC7 and FC8 fire mostly while the train stands. Because a spring brake is applied by releasing air, this can be the parking brake, for example a train parked because of the fault. Real pressure loss, sensor dropout or parking brake: the experts decide.</li>
+        <li><b>Only 2.4% of the old model's attention on the reliable groups:</b> the old model mostly ignores the most trustworthy signals. This is a direct reason to try subsystem-aware features in Phase 2.</li>
+        <li><b>Air loss grows every month, compressor sides swap at the April 2025 repair:</b> the 2025 change may be real wear and a repair, not random noise. A monitoring system should also watch slow trends over months.</li>
+        <li><b>No change in the air values in the last 3 days:</b> the air system shows slow wear, not a countdown to each single breakdown.</li>
+      </ul>
+      <p class="sum">In short: 3 of 19 groups are reliable, the old model barely uses them, and the train's air system wore out slowly over the year. All of this goes to the experts in a 13-page report.</p></div>
+  </section>
+
+  <section class="groups" id="groups" aria-labelledby="hgroups">
+    <div class="nb-head">
+      <div class="tagrow"><span class="tag analysis">Main analysis</span><span class="file">outputs/nb04_artifacts/heuristic_a.json</span></div>
+      <h2 id="hgroups">The 19 sensor groups up close</h2>
+    </div>
+    <p>Each group from NB04, with all its features and what happens to them when the group fires. The three groups that hold on the hidden test breakdowns come first. The descriptions say what the sensors measure; which part of the train a group belongs to is for the Wiener Linien experts to decide.</p>
+    <div class="glossary">
+      <h3>How to read the feature lists</h3>
+      <ul>
+        <li><b>Cars:</b> CW1 and CW2 are the two end cars, MW1 to MW4 the four motor cars in between. CW1, MW1, MW2 form side A, CW2, MW3, MW4 side B. <b>B1 / B2</b> is bogie 1 or 2 of a car.</li>
+        <li><b>Per 6 min:</b> lowest, highest or average value in a 6-minute piece; for on/off signals the number of switches.</li>
+        <li><b>Brake-cylinder pressure:</b> the air pressure that presses the brakes on. <b>Spring-brake pressure:</b> the air pressure that holds the spring (parking) brake off, so low pressure means the spring brake is on. <b>Control-valve pressure</b> and <b>air-brake force:</b> how hard the air brake is asked to brake and how hard it does.</li>
+        <li><b>Main air-tank pressure</b> and <b>compressor on/off:</b> the air supply. <b>Load pressure</b> and <b>load signal:</b> pressure in the air suspension and the weight reading of a car.</li>
+        <li><b>std:</b> how far the typical value during the group’s activity lies from normal, in normal standard deviations (+ higher, − lower).</li>
+      </ul>
+    </div>
+    <div class="fcgrid">
+    <article class="fc robust" id="fc5">
+      <h3 class="fct"><span class="fcid">FC5</span> CW2 compressor switches often</h3>
+      <div class="chips"><span class="chip ok">holds on test breakdowns</span><span class="chip">warns hours ahead</span><span class="chip">1 features</span></div>
+      <ul class="feats"><li><b>compressor on/off</b>, switches per 6 min: <span class="where">CW2</span></li></ul>
+      <p><b>What happens:</b> The compressor in CW2 switches about 4 times per 6 minutes instead of 0 to 1 (+5.6 std).</p>
+      <p><b>When:</b> Mostly while moving (38%), but in all states.</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> One of the 3 reliable groups: active in the 24 h before 15 of 21 breakdowns (8 expected by chance), about 14 h ahead, only 5 false alarms. Frequent compressor starts can mean the air system needs refilling more often, for example because of a leak.</p>
+    </article>
+    <article class="fc robust" id="fc7">
+      <h3 class="fct"><span class="fcid">FC7</span> CW1 spring-brake pressure drops to 0</h3>
+      <div class="chips"><span class="chip ok">holds on test breakdowns</span><span class="chip">warns hours ahead</span><span class="chip">2 features</span></div>
+      <ul class="feats"><li><b>spring-brake pressure</b>, lowest per 6 min: <span class="where">CW1-B2</span></li><li><b>load (suspension) pressure</b>, highest per 6 min: <span class="where">CW1-B2</span></li></ul>
+      <p><b>What happens:</b> In car CW1 (bogie 2) the lowest spring-brake pressure falls to 0 (−4.3 std), together with a lower load pressure.</p>
+      <p><b>When:</b> Mostly while standing (88%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> One of the 3 reliable groups: 63% of its windows are breakdown windows, it warns hours ahead in 6 breakdowns (1.7 expected) and gave only 1 false alarm. Real pressure loss, signal dropout or parking brake: question 7 for the experts.</p>
+    </article>
+    <article class="fc robust" id="fc8">
+      <h3 class="fct"><span class="fcid">FC8</span> Spring-brake pressure drops (several cars)</h3>
+      <div class="chips"><span class="chip ok">holds on test breakdowns</span><span class="chip">shows breakdowns while they happen</span><span class="chip">7 features</span></div>
+      <ul class="feats"><li><b>spring-brake pressure</b>, lowest per 6 min: <span class="where">MW2-B1, MW4-B1, MW4-B2, MW1-B1, MW3-B1, MW2-B2, CW2-B2</span></li></ul>
+      <p><b>What happens:</b> In CW2 and the four motor cars the lowest spring-brake pressure falls to about 0 to 0.2 (−2 to −4 std).</p>
+      <p><b>When:</b> Mostly while standing (92%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> One of the 3 reliable groups (34% breakdown windows, 14 false alarms). It mostly shows breakdowns while they happen. Same parking-brake question as FC7.</p>
+    </article>
+    <article class="fc" id="fc1">
+      <h3 class="fct"><span class="fcid">FC1</span> Brake-cylinder pressure stays up</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">shows breakdowns while they happen</span><span class="chip">12 features</span></div>
+      <ul class="feats"><li><b>brake-cylinder pressure</b>, lowest per 6 min: <span class="where">CW2-B1, CW2-B2, CW1-B1, MW1-B2, MW2-B2, CW1-B2, MW3-B1, MW1-B1, MW2-B1, MW4-B2, MW3-B2, MW4-B1</span></li></ul>
+      <p><b>What happens:</b> In all six cars the brake-cylinder pressure never drops to its usual low point during the 6 minutes (+4.5 std): the brakes stay applied the whole time.</p>
+      <p><b>When:</b> Almost only while standing (99%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> Probably normal operation: a train standing with its brakes on. Its breakdown rate (4.8%) is below the 6.0% average.</p>
+    </article>
+    <article class="fc" id="fc2">
+      <h3 class="fct"><span class="fcid">FC2</span> MW4 load signal high</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">mixed / weak</span><span class="chip">1 features</span></div>
+      <ul class="feats"><li><b>load signal</b>, lowest per 6 min: <span class="where">MW4</span></li></ul>
+      <p><b>What happens:</b> The lowest load reading of car MW4 is unusually high (+3.2 std).</p>
+      <p><b>When:</b> Mostly while standing (96%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> Busier on breakdown days in both periods and one of the drivers of the old model’s false alarms. A stuck or shifted load reading is one possibility.</p>
+    </article>
+    <article class="fc" id="fc3">
+      <h3 class="fct"><span class="fcid">FC3</span> Spring brakes switch often (end cars)</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">shows breakdowns while they happen</span><span class="chip warn">busier in 2025</span><span class="chip">4 features</span></div>
+      <ul class="feats"><li><b>spring brake on/off</b>, switches per 6 min: <span class="where">CW1-B2, CW2-B2, CW1-B1, CW2-B1</span></li></ul>
+      <p><b>What happens:</b> The spring brakes of both end cars (CW1, CW2) switch on and off far more often than normal (+4 to +5 std).</p>
+      <p><b>When:</b> Standing and slow driving.</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> Linked to breakdowns, but much busier in 2025 (drift) and does not hold on the test breakdowns.</p>
+    </article>
+    <article class="fc" id="fc4">
+      <h3 class="fct"><span class="fcid">FC4</span> CW1 compressor switches often</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">shows breakdowns while they happen</span><span class="chip warn">busier in 2025</span><span class="chip">1 features</span></div>
+      <ul class="feats"><li><b>compressor on/off</b>, switches per 6 min: <span class="where">CW1</span></li></ul>
+      <p><b>What happens:</b> The compressor in CW1 switches on and off more often than normal (+3.0 std).</p>
+      <p><b>When:</b> Mostly while moving or slow.</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> The CW1 counterpart of FC5, but driven by 2025 changes and not reliable on the test breakdowns. Fits the CW1 side getting worse after the April 2025 repair.</p>
+    </article>
+    <article class="fc" id="fc6">
+      <h3 class="fct"><span class="fcid">FC6</span> Spring-brake pressure low everywhere</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">shows breakdowns while they happen</span><span class="chip">19 features</span></div>
+      <ul class="feats"><li><b>spring-brake pressure</b>, average per 6 min: <span class="where">MW1-B2, MW4-B1, MW4-B2, MW1-B1, MW2-B1, MW3-B1, MW2-B2, CW1-B2, CW2-B2</span></li><li><b>spring-brake pressure</b>, highest per 6 min: <span class="where">MW1-B2, MW4-B1, MW4-B2, MW1-B1, MW2-B1, MW3-B1, MW2-B2, CW2-B2, CW1-B2, CW2-B1</span></li></ul>
+      <p><b>What happens:</b> In all six cars the highest and the average spring-brake pressure are low for the whole 6 minutes (−3.9 std).</p>
+      <p><b>When:</b> Almost only while standing (95%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> Busier on breakdown days in both periods (22% breakdown rate), but also behind many of the old model’s false alarms. Spring brakes apply when this pressure is released, so this can be a train parked with its spring brakes on.</p>
+    </article>
+    <article class="fc" id="fc9">
+      <h3 class="fct"><span class="fcid">FC9</span> MW1 bogie 2 brakes weakly</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">shows breakdowns while they happen</span><span class="chip warn">busier in 2025</span><span class="chip">4 features</span></div>
+      <ul class="feats"><li><b>spring-brake pressure</b>, lowest per 6 min: <span class="where">MW1-B2</span></li><li><b>brake control-valve pressure</b>, highest per 6 min: <span class="where">MW1-B2</span></li><li><b>air-brake force</b>, highest per 6 min: <span class="where">MW1-B2</span></li><li><b>load (suspension) pressure</b>, highest per 6 min: <span class="where">MW1-B2</span></li></ul>
+      <p><b>What happens:</b> In car MW1, bogie 2, the highest air-brake force (−6 std) and control-valve pressure (−2 std) are much lower than normal.</p>
+      <p><b>When:</b> Mostly while moving (73%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> Looks like one bogie braking less hard than usual. Much busier in 2025 and not reliable on the test breakdowns.</p>
+    </article>
+    <article class="fc" id="fc10">
+      <h3 class="fct"><span class="fcid">FC10</span> Weaker braking peaks (all cars)</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">mixed / weak</span><span class="chip warn">busier in 2025</span><span class="chip">16 features</span></div>
+      <ul class="feats"><li><b>brake control-valve pressure</b>, highest per 6 min: <span class="where">MW4-B1, MW2-B1, MW1-B1, MW4-B2, MW3-B1, CW1-B2, MW2-B2, CW2-B2</span></li><li><b>air-brake force</b>, highest per 6 min: <span class="where">MW2-B1, MW4-B1, MW1-B1, MW4-B2, MW3-B1, CW1-B2, MW2-B2, CW2-B2</span></li></ul>
+      <p><b>What happens:</b> Across all cars the highest air-brake force and control-valve pressure are lower than normal (−2 to −5 std).</p>
+      <p><b>When:</b> Almost only while moving (88%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> Strongest 2025 change of all groups (from 0.2% to 6.6% of quiet pieces). Possibly a change in how hard the train brakes in 2025 rather than a fault.</p>
+    </article>
+    <article class="fc" id="fc11">
+      <h3 class="fct"><span class="fcid">FC11</span> CW1 / MW1 load signal high</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">mixed / weak</span><span class="chip">5 features</span></div>
+      <ul class="feats"><li><b>load signal</b>, average per 6 min: <span class="where">MW1, CW1</span></li><li><b>load signal</b>, highest per 6 min: <span class="where">CW1</span></li><li><b>load signal</b>, lowest per 6 min: <span class="where">CW1, MW1</span></li></ul>
+      <p><b>What happens:</b> The load signals of CW1 and MW1 are higher than normal (+3 std).</p>
+      <p><b>When:</b> Mostly while moving (60%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> Many false alarms (194). A heavier load or a shifted reading on side A are possibilities.</p>
+    </article>
+    <article class="fc" id="fc12">
+      <h3 class="fct"><span class="fcid">FC12</span> Main air tanks low</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">shows breakdowns while they happen</span><span class="chip">6 features</span></div>
+      <ul class="feats"><li><b>main air-tank pressure</b>, lowest per 6 min: <span class="where">CW1, CW2</span></li><li><b>main air-tank pressure</b>, average per 6 min: <span class="where">CW1, CW2</span></li><li><b>main air-tank pressure</b>, highest per 6 min: <span class="where">CW1, CW2</span></li></ul>
+      <p><b>What happens:</b> The main air-tank pressure in both end cars is far below normal (−5 to −6 std).</p>
+      <p><b>When:</b> Almost only while standing (99%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> Low tank pressure while standing fits a train whose air has run down, for example after being switched off, or a leak. Connects to the growing pressure loss in the air-system analysis.</p>
+    </article>
+    <article class="fc" id="fc13">
+      <h3 class="fct"><span class="fcid">FC13</span> MW3 bogie 1 load pressure high</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">shows breakdowns while they happen</span><span class="chip">3 features</span></div>
+      <ul class="feats"><li><b>load (suspension) pressure</b>, average per 6 min: <span class="where">MW3-B1</span></li><li><b>load (suspension) pressure</b>, lowest per 6 min: <span class="where">MW3-B1</span></li><li><b>load (suspension) pressure</b>, highest per 6 min: <span class="where">MW3-B1</span></li></ul>
+      <p><b>What happens:</b> The load pressure of car MW3, bogie 1, is higher than normal (+2 to +3 std).</p>
+      <p><b>When:</b> Mostly while moving (55%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> Linked to breakdowns in training, but not on the test breakdowns.</p>
+    </article>
+    <article class="fc" id="fc14">
+      <h3 class="fct"><span class="fcid">FC14</span> Load pressure high (side A)</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">shows breakdowns while they happen</span><span class="chip warn">busier in 2025</span><span class="chip">8 features</span></div>
+      <ul class="feats"><li><b>load (suspension) pressure</b>, average per 6 min: <span class="where">MW1-B2, CW1-B2, MW2-B1, MW4-B1</span></li><li><b>load (suspension) pressure</b>, lowest per 6 min: <span class="where">MW1-B2, CW1-B2, MW2-B1, MW4-B1</span></li></ul>
+      <p><b>What happens:</b> The lowest and average load pressures in CW1, MW1, MW2 and MW4 are higher than normal (up to +3.6 std in MW1).</p>
+      <p><b>When:</b> Mostly while moving (61%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> Often active during the old model’s correct early warnings, but also during many false alarms (175) and busier in 2025.</p>
+    </article>
+    <article class="fc" id="fc15">
+      <h3 class="fct"><span class="fcid">FC15</span> CW2 load high</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">mixed / weak</span><span class="chip warn">busier in 2025</span><span class="chip">7 features</span></div>
+      <ul class="feats"><li><b>load (suspension) pressure</b>, average per 6 min: <span class="where">CW2-B2, CW2-B1</span></li><li><b>load (suspension) pressure</b>, lowest per 6 min: <span class="where">CW2-B1, CW2-B2</span></li><li><b>load signal</b>, average per 6 min: <span class="where">CW2</span></li><li><b>load signal</b>, lowest per 6 min: <span class="where">CW2</span></li><li><b>load signal</b>, highest per 6 min: <span class="where">CW2</span></li></ul>
+      <p><b>What happens:</b> Load pressure and load signal of car CW2 are higher than normal (+2 to +3 std).</p>
+      <p><b>When:</b> Almost only while moving (85%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> Breakdown rate 3.7%, below the 6.0% average: probably normal operation, for example a full train.</p>
+    </article>
+    <article class="fc" id="fc16">
+      <h3 class="fct"><span class="fcid">FC16</span> MW2 / MW4 bogie 2 load peaks</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">shows breakdowns while they happen</span><span class="chip">2 features</span></div>
+      <ul class="feats"><li><b>load (suspension) pressure</b>, highest per 6 min: <span class="where">MW2-B2, MW4-B2</span></li></ul>
+      <p><b>What happens:</b> The highest load pressure of MW2 and MW4, bogie 2, is higher than normal (+3 std).</p>
+      <p><b>When:</b> Mostly while moving (71%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> Passes on the training breakdowns but appears before only 3 test breakdowns, too few to hold.</p>
+    </article>
+    <article class="fc" id="fc17">
+      <h3 class="fct"><span class="fcid">FC17</span> Uneven load between bogies</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">shows breakdowns while they happen</span><span class="chip warn">busier in 2025</span><span class="chip">8 features</span></div>
+      <ul class="feats"><li><b>load (suspension) pressure</b>, average per 6 min: <span class="where">MW1-B1, CW1-B1, MW2-B2, MW4-B2</span></li><li><b>load (suspension) pressure</b>, lowest per 6 min: <span class="where">CW1-B1, MW1-B1, MW2-B2, MW4-B2</span></li></ul>
+      <p><b>What happens:</b> Load pressure is lower than normal on some bogies (MW1 bogie 1, −2.9 std) and higher on others (MW2 bogie 2, +1.7 std).</p>
+      <p><b>When:</b> Mostly while moving (61%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> An uneven load picture across the train. Often active during the old model’s correct early warnings, but much busier in 2025.</p>
+    </article>
+    <article class="fc" id="fc18">
+      <h3 class="fct"><span class="fcid">FC18</span> MW3 bogie 2 mix</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">shows breakdowns while they happen</span><span class="chip warn">busier in 2025</span><span class="chip">10 features</span></div>
+      <ul class="feats"><li><b>spring-brake pressure</b>, highest per 6 min: <span class="where">MW3-B2</span></li><li><b>spring-brake pressure</b>, lowest per 6 min: <span class="where">MW3-B2</span></li><li><b>spring-brake pressure</b>, average per 6 min: <span class="where">MW3-B2</span></li><li><b>brake control-valve pressure</b>, highest per 6 min: <span class="where">MW3-B2</span></li><li><b>air-brake force</b>, highest per 6 min: <span class="where">MW3-B2</span></li><li><b>load (suspension) pressure</b>, average per 6 min: <span class="where">MW3-B2</span></li><li><b>load (suspension) pressure</b>, lowest per 6 min: <span class="where">MW3-B2</span></li><li><b>load (suspension) pressure</b>, highest per 6 min: <span class="where">MW3-B2</span></li><li><b>load signal</b>, average per 6 min: <span class="where">MW3</span></li><li><b>load signal</b>, lowest per 6 min: <span class="where">MW3</span></li></ul>
+      <p><b>What happens:</b> In car MW3, bogie 2, control-valve pressure (−5 std), spring-brake pressure and brake force are lower, together with load values.</p>
+      <p><b>When:</b> Moving and standing (51% / 44%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> The group the old model relies on most (18% of its attention), busier on breakdown days in the training months only, with a slight rise in variation before breakdowns. Also behind many false alarms and busier in 2025.</p>
+    </article>
+    <article class="fc" id="fc19">
+      <h3 class="fct"><span class="fcid">FC19</span> Brake-cylinder pressure never high</h3>
+      <div class="chips"><span class="chip no">does not hold on test</span><span class="chip">mixed / weak</span><span class="chip warn">busier in 2025</span><span class="chip">10 features</span></div>
+      <ul class="feats"><li><b>brake-cylinder pressure</b>, highest per 6 min: <span class="where">MW3-B2, MW1-B2, MW2-B1, MW1-B1, MW4-B1, MW3-B1, MW4-B2, CW2-B2, MW2-B2, CW1-B2</span></li></ul>
+      <p><b>What happens:</b> In all six cars the highest brake-cylinder pressure stays far below normal (−4.5 std): no strong braking in the 6 minutes.</p>
+      <p><b>When:</b> Standing and moving (52% / 45%).</p>
+      <p><b>Possible meaning (for the experts to confirm):</b> The most frequent group, with the most false alarms (453). Probably normal stretches with little braking. Busier in 2025.</p>
+    </article>
+    </div>
+  </section>
+
+  <section class="end" aria-labelledby="hend">
+    <h2 id="hend">What happens next</h2>
+    <ul>
+      <li><b>Experts:</b> Wiener Linien say which groups make physical sense and which part of the train each belongs to.</li>
+      <li><b>Phase 2 (RQ2):</b> build models on the expert-approved groups and compare them fairly with the "all sensors at once" models, on the hidden test months.</li>
+    </ul>
+    <p class="note">Numbers are from the notebook runs of 27 October 2026.</p>
+  </section>
+</div>
