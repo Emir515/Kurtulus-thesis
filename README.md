@@ -157,6 +157,9 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 - **FC × Wiener Linien failure type:** enrichment in the 24 h before and during failures, per recorded type (evidence for the experts only; no subsystem labels assigned to FCs).
 - **Expert verification sheet** (`outputs/nb05_artifacts/expert_verification_sheet.csv/.xlsx`) with all evidence (including `lift_train`, `verdict`, `lift_test`, `test_check`) plus empty expert columns; the RQ1 verification metric and `build_subsystem_datasets()` run once the filled sheet is returned.
 - Deep dives are selected from the data (currently FC7 and FC8).
+- **Values behind the clusters** (supervisor feedback): top-10 features per FC with normal range vs. value when the FC fires (`fc_top10_features.csv`). In the robust FCs the spring-brake pressure minima fall to about 0 (normal 0.29-0.74, shift -4.3 std) and CW2 compressor switching rises to 4 per window (normal 0-1).
+- **Raw 1-second signals** read back for FC5, FC7, FC8 around one failure each (`fc*_raw_signals.png`). Before the 14 Dec 2024 failure, CW1 spring-brake and load pressure drop to 0 together from about 4 h before onset: real pressure loss or a CW1 signal dropout is a question for the experts.
+- **RF feature importance by FC** (current raw RF): 54% of the importance lies on FC features, mostly FC18, FC6 and FC14; the robust FCs get only 2.4%, and 16% sits on the `_sum` copies (`rf_importance_by_fc.csv`).
 
 ---
 
