@@ -122,7 +122,7 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 Explores the windowed feature dataset from NB02a before clustering; no model is used.
 
 - **Discriminability per documented sensor group, computed per period** (robust d = min(d_train, d_test)): 234/340 features have robust d > 0.3 (pooled: 268, inflated by drift). Mean robust d per documented group (MetroAT schema, `src/config.py`) is Brake 0.50, Context 0.34, Leveling 0.31, Traction (energy-braking resistance) 0.17, APU 0.16; the two asset-history features belong to no group.
-- **Within vs cross-group correlation** (same-sensor aggregation pairs and asset-history features excluded, normal windows): mean 0.565 vs 0.240 (2.3×), median 0.57 vs 0.17; 54% of cross-group pairs have |r| < 0.2, while 20% of within-group pairs have |r| > 0.8. Within-group correlation drops during failures in train (e.g. Brake 0.61 → 0.37) but much less in test (0.54 → 0.51).
+- **Within vs cross-group correlation** (same-sensor aggregation pairs and asset-history features excluded, normal windows): mean 0.565 vs 0.240 (2.3×), median 0.57 vs 0.17; 54% of cross-group pairs have |r| < 0.2, while 20% of within-group pairs have |r| > 0.8.
 - **Aggregation redundancy:** mean vs sum mean |r| = 0.89 (median 0.97), so dropping `_sum` in NB04 is a simplification. active_s vs flips are only moderately correlated (keep both).
 - **Temporal coverage:** ~178 windows/day, median gap = 350s (one window width), 571 operational breaks (>1h) across full period
 
