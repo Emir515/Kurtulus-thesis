@@ -11,9 +11,6 @@ __pycache__/
 *.pyo
 .ipynb_checkpoints/
 
-# Claude Code
-.claude/
-
 # IDE
 .vscode/
 .idea/

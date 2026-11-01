@@ -14,7 +14,8 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 NB = os.path.join(ROOT, 'notebooks')
 A5 = os.path.join(ROOT, 'outputs', 'nb05_artifacts')
 FIG = os.path.join(HERE, 'figs')
-N1, N3, N4 = '01_data_exploration.ipynb', '03_dataset_analysis.ipynb', '04_anomaly_detection_cluster_analysis.ipynb'
+N1, N3A, N3B, N4 = ('01_data_exploration.ipynb', '03a_feature_exploration.ipynb', '03b_baseline_score_analysis.ipynb',
+                    '04_anomaly_detection_cluster_analysis.ipynb')
 
 # figure file -> (notebook, text that identifies the plotting cell, index of the image in that cell) or a saved PNG
 SOURCES = {
@@ -22,16 +23,17 @@ SOURCES = {
     'nb01_sensors.png': (N1, 'Key Sensors (hourly means)', 0),
     'nb01_distributions.png': (N1, 'Normal vs Failure (train', 0),
     'nb01_correlation.png': (N1, 'Sensor Correlation Matrix', 0),
-    'nb03_scores_year.png': (N3, 'Failure Probability (Jun 2024', 0),
-    'nb03_train_test.png': (N3, 'RF Probability: Train vs Test', 0),
-    'nb03_hotspots.png': (N3, 'RF Hotspots', 0),
-    'nb03_separation.png': (N3, 'Feature Discriminability by Documented Sensor Group', 0),
-    'nb03_within_group.png': (N3, 'Within-Group Correlation (different sensors)', 0),
-    'nb03_aggregation.png': (N3, 'Mean |Correlation| Between Aggregation Types', 0),
-    'nb03_per_sensor.png': (N3, 'Per-Sensor Aggregation Correlation', 0),
-    'nb03_standardisation.png': (N3, 'Per-Channel Mean (after z-score', 0),
-    'nb03_coverage.png': (N3, 'Temporal Coverage: Windows per Day', 0),
-    'nb03_hour.png': (N3, 'RF Probability by Hour of Day', 0),
+    'nb03_scores_year.png': (N3B, 'Failure Probability (Jun 2024', 0),
+    'nb03_train_test.png': (N3B, 'RF Probability: Train vs Test', 0),
+    'nb03_hotspots.png': (N3B, 'RF Hotspots', 0),
+    'nb03_separation.png': (N3A, 'Feature Discriminability by Documented Sensor Group', 0),
+    'nb03_within_group.png': (N3A, 'Within vs Cross-Group Feature Correlation', 0),
+    'nb03_aggregation.png': (N3A, 'Mean |Correlation| Between Aggregation Types', 0),
+    'nb03_per_sensor.png': (N3A, 'Per-Sensor Aggregation Correlation', 0),
+    'nb03_standardisation.png': (N3B, 'Per-Channel Mean (after z-score', 0),
+    'nb03_coverage.png': (N3A, 'Temporal Coverage: Windows per Day', 0),
+    'nb03_hour.png': (N3B, 'RF Probability by Hour of Day', 0),
+    'nb03_hour_fail.png': (N3A, 'Failure Rate by Hour of Day', 0),
     'nb04_activation_count.png': (N4, 'Feature Activation Count: Normal vs Failure', 0),
     'nb04_thresholds.png': (N4, 'Threshold Sensitivity Analysis', 0),
     'nb04_monthly.png': (N4, 'Monthly anomaly rate: drift check', 0),

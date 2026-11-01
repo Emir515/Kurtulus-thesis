@@ -80,7 +80,7 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 > | Helm's two-sided `filtfilt` | 0.165 (Helm: 0.206) |
 > | Same filter, causal (`lfilter`, past scores only, deployable) | 0.109 |
 >
-> The deployable version of the published baseline therefore reaches about 0.11–0.13. NB02b now contains Helm's full procedure (432-combination grid search with 5-fold blocked CV, smoothing and threshold chosen on the holdout, test scored with the dev-fitted model) and reports every result **raw, causal and two-sided**; RQ2 applies the same three modes to every model. NB02b is **not executed yet** (Phase 2); afterwards NB03 and NB05 §4 are re-run.
+> The deployable version of the published baseline therefore reaches about 0.11–0.13. NB02b now contains Helm's full procedure (432-combination grid search with 5-fold blocked CV, smoothing and threshold chosen on the holdout, test scored with the dev-fitted model) and reports every result **raw, causal and two-sided**; RQ2 applies the same three modes to every model. NB02b is **not executed yet** (Phase 2); afterwards NB03b and NB05 §4 / §7.3 are re-run (the clusters in NB04 do not use the models and stay unchanged).
 >
 > **How the published "11/11 early hits, 14 false alarms" were counted:** each record in Helm's `failure.csv` between 10 Feb and 1 Jun 2025 is one failure (the two overlapping records of 18 Feb count separately; the June failures are excluded), an early hit is any smoothed score above the threshold 1–6 days before the start, and a false alarm is an upward threshold crossing outside [start − 6 d, end]. Our NB05 counts merged events from the data's failure flag (11 test events including June) and alarm episodes, so the counts are not directly comparable.
 
@@ -90,7 +90,7 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 
 **Full-period anomaly timeline (Jun 2024 – Jun 2025):**
 
-![Anomaly Timeline](outputs/nb03_artifacts/anomaly_timeline_full.png)
+![Anomaly Timeline](outputs/nb03b_artifacts/anomaly_timeline_full.png)
 
 ---
 
@@ -117,16 +117,23 @@ LSTM-AE anomaly scores: normal mean=0.773, failure mean=0.857 (weak separation).
 - Every result is reported **raw**, **causal** (low-pass on past scores only) and **two-sided** (Helm's `filtfilt`, uses future scores; for comparison with the published numbers only)
 - Both models predict on ALL test windows; these are the full-feature side of the RQ2 comparison
 
-### Dataset Analysis — Full Period (NB03)
+### Feature Dataset Exploration (NB03a)
+
+Explores the windowed feature dataset from NB02a before clustering; no model is used.
+
+- **Discriminability per documented sensor group, computed per period** (robust d = min(d_train, d_test)): 234/340 features have robust d > 0.3 (pooled: 268, inflated by drift). Mean robust d per documented group (MetroAT schema, `src/config.py`) is Brake 0.50, Context 0.34, Leveling 0.31, Traction (energy-braking resistance) 0.17, APU 0.16; the two asset-history features belong to no group.
+- **Within vs cross-group correlation** (same-sensor aggregation pairs and asset-history features excluded, normal windows): mean 0.565 vs 0.240 (2.3×), median 0.57 vs 0.17; 54% of cross-group pairs have |r| < 0.2, while 20% of within-group pairs have |r| > 0.8. Within-group correlation drops during failures in train (e.g. Brake 0.61 → 0.37) but much less in test (0.54 → 0.51).
+- **Aggregation redundancy:** mean vs sum mean |r| = 0.89 (median 0.97), so dropping `_sum` in NB04 is a simplification. active_s vs flips are only moderately correlated (keep both).
+- **Temporal coverage:** ~178 windows/day, median gap = 350s (one window width), 571 operational breaks (>1h) across full period
+
+### Baseline Score Analysis (NB03b)
+
+Applies the existing RF and LSTM-AE to the full period (problem analysis; not an input to the clustering).
 
 - **Train/test shift:** LSTM-AE reconstruction error is 0.539 (train) vs 0.774 (test) and rises from ~April 2025, consistent with the baseline shift in RAMS 2026. Pooled train+test comparisons are therefore confounded, because failure windows are concentrated in the test period.
 - **RF scores on the train period are in-sample** (the RF was fit on train), so the train-vs-test comparison of RF probabilities (3.43% vs 3.80% above threshold) and hotspots (124 vs 62) is not like-for-like.
 - **Anomaly hotspots:** RF finds 186 sustained high-score clusters, 27 overlapping labelled failures. LSTM-AE (train-period p90 threshold) finds 554, only 10 with failures, most of them in the drifting test period.
-- **Discriminability per documented sensor group, computed per period** (robust d = min(d_train, d_test)): 234/340 features have robust d > 0.3 (pooled: 268, inflated by drift). Mean robust d is Brake 0.50, Context 0.34, Leveling 0.31, energy-braking resistance 0.17, APU 0.16.
-- **Within vs cross-group correlation** (same-sensor aggregation pairs excluded): 0.565 vs 0.236 (2.4×). Within-group correlation drops during failures in train (e.g. Brake 0.61 → 0.37) but much less in test (0.54 → 0.51).
-- **Aggregation redundancy:** mean vs sum mean |r| = 0.89 (median 0.97), so dropping `_sum` in NB04 is a simplification. active_s vs flips are only moderately correlated (keep both).
 - **Standardization:** with a sample spread over the train period, all LSTM-AE channels are well standardised (overall mean −0.01, std 0.98). The earlier "12 channels off-centre" came from sampling only June 2024.
-- **Temporal coverage:** ~178 windows/day, median gap = 350s (one window width), 571 operational breaks (>1h) across full period
 
 ### Anomaly Detection & Feature Clustering (NB04)
 
@@ -174,7 +181,8 @@ Kurtulus-thesis/
 │   ├── 01_data_exploration.ipynb   # EDA: events, timelines, sensor shifts during failures, correlation structure
 │   ├── 02a_dataset_creation.ipynb  # Windowed features + labels, LSTM-AE sequences from raw MetroAT (Helm/Steiner setup)
 │   ├── 02b_baselines.ipynb         # Full-feature RF (grid search) + LSTM-AE baselines; not executed yet (Phase 2)
-│   ├── 03_dataset_analysis.ipynb   # Full-period analysis: train/test shift, hotspots, per-period Cohen's d
+│   ├── 03a_feature_exploration.ipynb  # Feature dataset exploration: per-period Cohen's d, group correlation, aggregation redundancy, coverage (feeds NB04)
+│   ├── 03b_baseline_score_analysis.ipynb  # RF / LSTM-AE scores over the full period: train/test shift, hotspots (baseline branch)
 │   ├── 04_anomaly_detection_cluster_analysis.ipynb  # Z-score anomalies, train-only feature clustering (FC1-FC19), temporal + drift analysis
 │   └── 05_pattern_discovery_validation.ipynb  # Event-level FC scoring, prior-model alarms, raw-signal back-calculation, air-system trends, expert sheet
 ├── src/
@@ -191,7 +199,8 @@ Kurtulus-thesis/
 │   ├── supervised/                 # Feature caches, train/test parquet (NB02a); RF model + test predictions (NB02b)
 │   ├── unsupervised/               # LSTM-AE sequences (.npy) and metadata (NB02a); model and scores (NB02b)
 │   ├── nb02_artifacts/             # Test-period anomaly timeline (NB02b)
-│   ├── nb03_artifacts/             # Full-period timeline, aggregation redundancy
+│   ├── nb03a_artifacts/            # Aggregation redundancy plots and recommendation
+│   ├── nb03b_artifacts/            # Full-period score timeline
 │   ├── nb04_artifacts/             # FC1-FC19, activations, canonical failure events, temporal/drift/location tables
 │   ├── nb05_artifacts/             # Scorecard, top-10 values, raw signals, air-system tables, expert verification sheet
 │   └── expert_review/              # Everything to send to Wiener Linien: review PDF, workflow PDF, verification sheet
@@ -207,7 +216,8 @@ Kurtulus-thesis/
 1. **Data Exploration (NB01)**: dataset structure, failure and maintenance events, full-timeline sensor plots, sensor shifts during failures, correlation structure by documented sensor group
 2. **Dataset Creation (NB02a)**: windowed features (6 min) with 6.2 h labels and LSTM-AE sequences (23 min) from the raw MetroAT train/test files, replicating Helm's code
 3. **Full-Feature Baselines (NB02b)**: RF (Helm's grid search with blocked CV) and LSTM-AE on all features; smoothing and threshold chosen on hold-outs; predictions on all test windows, reported raw / causal / two-sided (run in Phase 2)
-4. **Dataset Analysis (NB03)**: full-period score timeline, train/test shift, hotspots, per-period Cohen's d, aggregation redundancy, standardization checks, temporal coverage
+4. **Feature Dataset Exploration (NB03a)**: per-period Cohen's d per documented sensor group, within- vs cross-group correlation, aggregation redundancy (basis for dropping `_sum` in NB04), temporal coverage; no model involved
+   **Baseline Score Analysis (NB03b)**: the RF and LSTM-AE applied to the full period: score timeline, train/test shift, hotspots, LSTM-AE input checks; problem analysis only, not used by the clustering
 5. **Anomaly Detection & Feature Clustering (NB04)**: canonical failure events, z-score anomaly windows, feature clustering via Jaccard distance fitted on the train period only (FC1-FC19), cluster validation, drift-controlled temporal pattern analysis, volatility lead-up, drift checks
 6. **Pattern Discovery & Validation (NB05)**: event-level scoring of each FC (KEEP decided on train events, checked on test events), FCs behind the RF/LSTM-AE early hits and false alarms, FC vs. recorded failure type, expert verification sheet and RQ1 metric
 7. **Expert verification (RQ1)**: Wiener Linien experts assign subsystems to FCs via the verification sheet
@@ -221,9 +231,10 @@ Kurtulus-thesis/
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the pipeline in order (each notebook reads the previous one's outputs)
+# Run the pipeline in order. Clustering branch: 01 -> 02a -> 03a -> 04 -> 05;
+# baseline branch: 02a -> 02b -> 03b (NB05 sections 4 and 7.3 read the baseline models)
 cd notebooks
-for nb in 01_data_exploration 02a_dataset_creation 02b_baselines 03_dataset_analysis \
+for nb in 01_data_exploration 02a_dataset_creation 02b_baselines 03a_feature_exploration 03b_baseline_score_analysis \
           04_anomaly_detection_cluster_analysis 05_pattern_discovery_validation; do
   jupyter nbconvert --to notebook --execute --inplace $nb.ipynb --ExecutePreprocessor.timeout=3600
 done

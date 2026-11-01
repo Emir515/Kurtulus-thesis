@@ -1,5 +1,4 @@
 <title>Thesis Notebooks Explained</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -145,65 +144,63 @@ ul.feats .where { font-family: var(--f-mono); font-size: 12.5px; color: var(--mu
 
   <figure>
     <div class="scroll">
-      <svg class="map" viewBox="0 0 920 320" role="img" aria-label="Workflow: NB01 explores the raw data, NB02a builds the datasets, NB02b holds the old models and is not run yet, NB03 explores the datasets. Then NB04 finds 19 sensor groups and NB05 checks and explains them; 3 groups hold up. Next come the Wiener Linien experts and then Phase 2, which both wait.">
+      <svg class="map" viewBox="0 0 920 480" role="img" aria-label="Workflow: NB01 explores the raw data, NB02a builds the datasets, NB03a explores the prepared pieces without any model, NB04 finds 19 sensor groups and NB05 checks and explains them; 3 groups hold up. Next come the Wiener Linien experts and then Phase 2, which both wait. A separate baseline branch holds the old models: NB02b (ready, runs in Phase 2) and NB03b, which looks at their scores over the year; the grouping does not use it.">
         <defs>
           <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="currentColor"></path>
           </marker>
         </defs>
-        <!-- Row 1: preparation and exploration -->
+        <!-- Row 1: grouping branch -->
         <rect class="node explore" x="20" y="40" width="190" height="86" rx="10"></rect>
         <text class="id" x="36" y="64">NB01</text>
         <text class="nm" x="36" y="86">Explore the raw data</text>
         <text class="out" x="36" y="108">21 breakdowns found</text>
-
         <rect class="node build" x="250" y="40" width="190" height="86" rx="10"></rect>
         <text class="id" x="266" y="64">NB02a</text>
         <text class="nm" x="266" y="86">Build the datasets</text>
         <text class="out" x="266" y="108">64,522 six-minute pieces</text>
-
-        <rect class="node wait" x="480" y="40" width="190" height="86" rx="10"></rect>
-        <text class="id" x="496" y="64">NB02b</text>
-        <text class="nm" x="496" y="86">Old models (baseline)</text>
-        <text class="out" x="496" y="108">ready, runs in Phase 2</text>
-
-        <rect class="node explore" x="710" y="40" width="190" height="86" rx="10"></rect>
-        <text class="id" x="726" y="64">NB03</text>
-        <text class="nm" x="726" y="86">Explore the datasets</text>
-        <text class="out" x="726" y="108">2025 behaves differently</text>
-
+        <rect class="node explore" x="480" y="40" width="190" height="86" rx="10"></rect>
+        <text class="id" x="496" y="64">NB03a</text>
+        <text class="nm" x="496" y="86">Explore the pieces</text>
+        <text class="out" x="496" y="108">no models; totals dropped</text>
+        <rect class="node analysis" x="710" y="40" width="190" height="86" rx="10"></rect>
+        <text class="id" x="726" y="64">NB04</text>
+        <text class="nm" x="726" y="86">Find sensor groups</text>
+        <text class="out" x="726" y="108">19 groups</text>
         <line class="edge" x1="210" y1="83" x2="248" y2="83" marker-end="url(#ar)"></line>
         <line class="edge" x1="440" y1="83" x2="478" y2="83" marker-end="url(#ar)"></line>
         <line class="edge" x1="670" y1="83" x2="708" y2="83" marker-end="url(#ar)"></line>
 
-        <!-- Turn to row 2 -->
-        <polyline class="edge" points="805,126 805,166 115,166 115,198" marker-end="url(#ar)"></polyline>
-        <text class="el" x="460" y="158" text-anchor="middle">then the main analysis (RQ1)</text>
+        <!-- Row 2: baseline branch (old models), not used by the grouping -->
+        <line class="edge" x1="345" y1="126" x2="345" y2="198" stroke-dasharray="5 4" marker-end="url(#ar)"></line>
+        <rect class="node wait" x="250" y="200" width="190" height="86" rx="10"></rect>
+        <text class="id" x="266" y="224">NB02b</text>
+        <text class="nm" x="266" y="246">Old models (baseline)</text>
+        <text class="out" x="266" y="268">ready, runs in Phase 2</text>
+        <rect class="node explore" x="480" y="200" width="190" height="86" rx="10"></rect>
+        <text class="id" x="496" y="224">NB03b</text>
+        <text class="nm" x="496" y="246">Old models' scores</text>
+        <text class="out" x="496" y="268">2025 behaves differently</text>
+        <line class="edge" x1="440" y1="243" x2="478" y2="243" stroke-dasharray="5 4" marker-end="url(#ar)"></line>
+        <text class="el" x="20" y="232">baseline branch:</text>
+        <text class="el" x="20" y="252">not used by the grouping</text>
 
-        <!-- Row 2: analysis and what follows -->
-        <rect class="node analysis" x="20" y="200" width="190" height="86" rx="10"></rect>
-        <text class="id" x="36" y="224">NB04</text>
-        <text class="nm" x="36" y="246">Find sensor groups</text>
-        <text class="out" x="36" y="268">19 groups</text>
-
-        <rect class="node analysis" x="250" y="200" width="190" height="86" rx="10"></rect>
-        <text class="id" x="266" y="224">NB05</text>
-        <text class="nm" x="266" y="246">Check and explain</text>
-        <text class="out" x="266" y="268">3 groups hold up</text>
-
-        <rect class="node wait" x="480" y="200" width="190" height="86" rx="10"></rect>
-        <text class="id" x="496" y="224">Experts</text>
-        <text class="nm" x="496" y="246">Wiener Linien check</text>
-        <text class="out" x="496" y="268">report + sheet ready</text>
-
-        <rect class="node wait" x="710" y="200" width="190" height="86" rx="10"></rect>
-        <text class="id" x="726" y="224">Phase 2</text>
-        <text class="nm" x="726" y="246">Compare models (RQ2)</text>
-        <text class="out" x="726" y="268">after the experts</text>
-
-        <line class="edge" x1="210" y1="243" x2="248" y2="243" marker-end="url(#ar)"></line>
-        <line class="edge" x1="440" y1="243" x2="478" y2="243" marker-end="url(#ar)"></line>
-        <line class="edge" x1="670" y1="243" x2="708" y2="243" marker-end="url(#ar)"></line>
+        <!-- Row 3: main analysis continues (right to left) -->
+        <line class="edge" x1="805" y1="126" x2="805" y2="358" marker-end="url(#ar)"></line>
+        <rect class="node analysis" x="710" y="360" width="190" height="86" rx="10"></rect>
+        <text class="id" x="726" y="384">NB05</text>
+        <text class="nm" x="726" y="406">Check and explain</text>
+        <text class="out" x="726" y="428">3 groups hold up</text>
+        <rect class="node wait" x="480" y="360" width="190" height="86" rx="10"></rect>
+        <text class="id" x="496" y="384">Experts</text>
+        <text class="nm" x="496" y="406">Wiener Linien check</text>
+        <text class="out" x="496" y="428">report + sheet ready</text>
+        <rect class="node wait" x="250" y="360" width="190" height="86" rx="10"></rect>
+        <text class="id" x="266" y="384">Phase 2</text>
+        <text class="nm" x="266" y="406">Compare models (RQ2)</text>
+        <text class="out" x="266" y="428">after the experts</text>
+        <line class="edge" x1="710" y1="403" x2="672" y2="403" marker-end="url(#ar)"></line>
+        <line class="edge" x1="480" y1="403" x2="442" y2="403" marker-end="url(#ar)"></line>
       </svg>
     </div>
     <div class="legend" aria-label="Legend">
@@ -212,7 +209,7 @@ ul.feats .where { font-family: var(--f-mono); font-size: 12.5px; color: var(--mu
       <span><i class="sw analysis"></i>Main analysis</span>
       <span><i class="sw wait"></i>Waiting (Phase 2 or experts)</span>
     </div>
-    <figcaption>Arrows show the reading order. NB03, NB04 and NB05 all start from the datasets that NB02a builds. All 19 sensor groups are described in <a href="#groups">their own section</a>.</figcaption>
+    <figcaption>Arrows show the reading order. The grouping (NB03a, NB04, NB05) starts from the datasets that NB02a builds; the old models (NB02b, NB03b) are a separate branch that NB05 only uses for comparison. All 19 sensor groups are described in <a href="#groups">their own section</a>.</figcaption>
   </figure>
 
   <!-- NB01 -->
@@ -242,7 +239,7 @@ ul.feats .where { font-family: var(--f-mono); font-size: 12.5px; color: var(--mu
     <div class="plots"><h3>Outputs and how to read them</h3>
       <ul>
         <li><span class="pn">Breakdown and maintenance timeline<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb01_timeline.png" alt="Breakdown and maintenance timeline" loading="lazy"></figure><span class="row read"><b>How to read:</b> the year runs left to right; each coloured bar is one recorded breakdown (by type) or one maintenance stay.</span><span class="row"><b>What it shows:</b> 21 breakdowns that come in waves: late summer and autumn 2024, then February to May 2025. 10 fall before the train/test split and 11 after it, although the test period is only about 4.5 months long. Maintenance happens roughly every 4 weeks (18 stays).</span><span class="row matters"><b>Why it matters:</b> The test months have more breakdowns per month than the training months, so the share of breakdown pieces is higher there (2.9% vs 1.3%). Every later comparison therefore uses a baseline from the same period.</span></li>
-        <li><span class="pn">Key sensors over the year<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb01_sensors.png" alt="Key sensors over the year" loading="lazy"></figure><span class="row read"><b>How to read:</b> hourly averages of a few important sensors; flat bands are normal operation, white gaps are days without data.</span><span class="row"><b>What it shows:</b> Levels are steady through 2024 and shift in 2025.</span><span class="row matters"><b>Why it matters:</b> The first visual hint of the 2025 change (drift) that NB03, NB04 and the air-system analysis in NB05 then measure.</span></li>
+        <li><span class="pn">Key sensors over the year<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb01_sensors.png" alt="Key sensors over the year" loading="lazy"></figure><span class="row read"><b>How to read:</b> hourly averages of a few important sensors; flat bands are normal operation, white gaps are days without data.</span><span class="row"><b>What it shows:</b> Levels are steady through 2024 and shift in 2025.</span><span class="row matters"><b>Why it matters:</b> The first visual hint of the 2025 change (drift) that NB03b, NB04 and the air-system analysis in NB05 then measure.</span></li>
         <li><span class="pn">Normal vs breakdown distributions<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb01_distributions.png" alt="Normal vs breakdown distributions" loading="lazy"></figure><span class="row read"><b>How to read:</b> for each sensor two histograms of the raw 1-second values (training months, maintenance removed): normal operation and inside a recorded breakdown. The further apart, the larger the effect (Cohen’s d).</span><span class="row"><b>What it shows:</b> The largest shifts are on the CW1 side: spring-brake pressure d = −1.5, main air-tank pressure −1.1 and load pressure −1.1, all lower during breakdowns.</span><span class="row matters"><b>Why it matters:</b> During breakdowns air pressure drops on the CW1 side. These sensors come back in the groups (FC7: CW1 spring-brake pressure, FC12: main air tanks).</span><span class="row caveat"><b>Careful:</b> These are values during a breakdown, not before it, so they say nothing yet about prediction.</span></li>
         <li><span class="pn">Correlation matrix, ordered by documented sensor group<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb01_correlation.png" alt="Correlation matrix, ordered by documented sensor group" loading="lazy"></figure><span class="row read"><b>How to read:</b> a grid of all sensor pairs, sorted by the sensor groups in the MetroAT documentation; darker means the two sensors move together more strongly.</span><span class="row"><b>What it shows:</b> Average strength inside the documented groups: energy braking 0.98, brake 0.72, leveling 0.35, air supply 0.23; between groups only 0.10 to 0.26. A shuffle test gives p = 0.001.</span><span class="row matters"><b>Why it matters:</b> The structure of the train is visible in the data, which supports the idea of subsystem-aware features.</span><span class="row caveat"><b>Careful:</b> Not every group is tight: the air-supply sensors mix on/off signals with pressures and correlate weakly even among themselves.</span></li>
       </ul></div>
@@ -334,13 +331,14 @@ ul.feats .where { font-family: var(--f-mono); font-size: 12.5px; color: var(--mu
       <p class="sum">In short: the baseline is weaker than published, and the thesis compares against the honest version.</p></div>
   </section>
 
-  <!-- NB03 -->
+  <!-- NB03a + NB03b -->
   <section class="nb" id="nb03" aria-labelledby="h03">
     <div class="nb-head">
-      <div class="tagrow"><span class="tag explore">Looking at the data</span><span class="file">03_dataset_analysis.ipynb</span></div>
-      <h2 id="h03">NB03 · Explore the prepared datasets</h2>
+      <div class="tagrow"><span class="tag explore">Looking at the data</span><span class="file">03a_feature_exploration.ipynb</span><span class="file">03b_baseline_score_analysis.ipynb</span></div>
+      <h2 id="h03">NB03a + NB03b · Explore the prepared datasets and the old models' scores</h2>
     </div>
     <p class="question"><b>Question:</b> Do the training and test months look the same, and where do the old models raise alarms?</p>
+    <p>This work is split over two notebooks. <b>NB03a</b> looks only at the prepared pieces and their values (no model); it is the step before the grouping in NB04, which drops the totals because of it. <b>NB03b</b> runs the two old models over the whole year to show where and why they raise false alarms; the grouping does not use it.</p>
     <div class="cols">
       <div>
         <h3>Steps</h3>
@@ -365,11 +363,11 @@ ul.feats .where { font-family: var(--f-mono); font-size: 12.5px; color: var(--mu
         <li><span class="pn">Training vs test months, and month by month<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_train_test.png" alt="Training vs test months, and month by month" loading="lazy"></figure><span class="row read"><b>How to read:</b> score distributions of both periods side by side, plus one box per month.</span><span class="row"><b>What it shows:</b> Autoencoder error on normal pieces: 0.539 in training, 0.774 in test. Random Forest pieces above its threshold: 3.43% vs 3.80%.</span><span class="row matters"><b>Why it matters:</b> The autoencoder is hit much harder by the 2025 change than the Random Forest, which explains its many false alarms.</span></li>
         <li><span class="pn">Long alarm stretches (hotspots)<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_hotspots.png" alt="Long alarm stretches (hotspots)" loading="lazy"></figure><span class="row read"><b>How to read:</b> each coloured span is a stretch of at least 3 (Random Forest) or 2 (autoencoder) pieces in a row above the alarm line; green overlaps a recorded breakdown, purple does not.</span><span class="row"><b>What it shows:</b> Random Forest: 186 stretches, 27 real (15%). Autoencoder: 554 stretches, only 10 real (2%), most of them in 2025.</span><span class="row matters"><b>Why it matters:</b> Even long, persistent alarms are mostly false. This is the false-alarm problem (P1 of the proposal) in numbers.</span></li>
         <li><span class="pn">Separating power per feature and per sensor group<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_separation.png" alt="Separating power per feature and per sensor group" loading="lazy"></figure><span class="row read"><b>How to read:</b> left: the 25 values that differ most between breakdown and normal; right: average per documented group. Each value is measured in both periods and the smaller effect is kept, so drift cannot inflate it.</span><span class="row"><b>What it shows:</b> 234 of 340 values separate breakdown from normal in both periods (d > 0.3). Average by group: brake 0.50, context 0.34, leveling 0.31, energy braking 0.17, air supply 0.16. Pooled over both periods 268 would pass, 34 of them only because of drift.</span><span class="row matters"><b>Why it matters:</b> There is real information in the data, mostly in the brake values.</span></li>
-        <li><span class="pn">Correlation inside groups: normal vs breakdown, per period<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_within_group.png" alt="Correlation inside groups: normal vs breakdown, per period" loading="lazy"></figure><span class="row read"><b>How to read:</b> bars per documented group: how strongly different sensors of the group move together in normal and breakdown pieces, separately for training and test months.</span><span class="row"><b>What it shows:</b> Inside groups 0.565, across groups 0.236 (2.4×). During training-period breakdowns brake sensors lose their coordination (0.61 to 0.37), in the test period hardly (0.54 to 0.51).</span><span class="row matters"><b>Why it matters:</b> Sensors that stop moving together can be a breakdown signature, but here it is not stable across periods.</span><span class="row caveat"><b>Careful:</b> Few breakdowns per period, so these numbers rest on small samples.</span></li>
+        <li><span class="pn">Do sensors of the same group move together?<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_within_group.png" alt="Correlation of sensor pairs inside vs across documented groups" loading="lazy"></figure><span class="row read"><b>How to read:</b> every pair of two different sensors gets one correlation value between 0 (unrelated) and 1 (move exactly together), measured on normal pieces. Blue: both sensors are in the same documented group; orange: different groups. Each colour is scaled to the same total area ("density"), so the shapes can be compared; dashed lines are the averages.</span><span class="row"><b>What it shows:</b> Inside groups the average is 0.565 (median 0.57), across groups 0.240 (median 0.17), 2.3× higher. Half of the cross-group pairs (54%) are almost unrelated (below 0.2), while one in five pairs inside a group (20%) moves almost in lockstep (above 0.8).</span><span class="row matters"><b>Why it matters:</b> The sensors really form groups in the data, so organising them by part of the train is a reasonable idea to test. The whole distribution shifts, not just a few extreme pairs.</span><span class="row caveat"><b>Careful:</b> part of the togetherness is trivial (for example, all brake cylinders are applied at the same moment). The notebook also prints normal vs breakdown per group and period as a table; that effect is not stable (brakes 0.61 to 0.37 in training, 0.54 to 0.51 in test).</span></li>
         <li><span class="pn">Summary statistics: which ones carry the information<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_aggregation.png" alt="Summary statistics: which ones carry the information" loading="lazy"><img src="figs/nb03_per_sensor.png" alt="Summary statistics: which ones carry the information" loading="lazy"></figure><span class="row read"><b>How to read:</b> top: average correlation between the summary types (lowest, highest, average, total, switches, seconds on) over all sensors; bottom: six example sensors.</span><span class="row"><b>What it shows:</b> Average and total are nearly the same (0.89, median 0.97). The statistic that separates breakdowns best is the lowest value for 40% of sensors, the highest for 29%, switches 15%, seconds on 7%, total 5%, average 3%.</span><span class="row matters"><b>Why it matters:</b> Lowest and highest values carry most of the breakdown information, which is what the supervisor asked to use ("use max and min"). The totals are dropped in NB04.</span></li>
         <li><span class="pn">Scaling check of the autoencoder input<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_standardisation.png" alt="Scaling check of the autoencoder input" loading="lazy"></figure><span class="row read"><b>How to read:</b> mean and spread of every channel after scaling; ideal values are 0 and 1.</span><span class="row"><b>What it shows:</b> Mean −0.01, spread 0.98, no channel is (nearly) constant.</span><span class="row matters"><b>Why it matters:</b> The autoencoder input is correctly scaled. An earlier warning about 12 off-centre channels came from sampling only June 2024.</span></li>
-        <li><span class="pn">Pieces per day<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_coverage.png" alt="Pieces per day" loading="lazy"></figure><span class="row read"><b>How to read:</b> number of 6-minute pieces per day, with the daily Random Forest score below.</span><span class="row"><b>What it shows:</b> About 178 pieces per day (median 196); 571 breaks of more than an hour (360 training, 211 test), median 2.8 h, longest 6.9 days.</span><span class="row matters"><b>Why it matters:</b> The train does not run around the clock, so gaps in the data are normal. Later analyses never draw lines across them and treat them explicitly.</span></li>
-        <li><span class="pn">Time of day<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_hour.png" alt="Time of day" loading="lazy"></figure><span class="row read"><b>How to read:</b> left: average Random Forest probability per hour; right: share of breakdown pieces per hour.</span><span class="row"><b>What it shows:</b> Both peak between 2 and 8 in the morning: probability about 0.12 vs 0.05 during the day, breakdown share 3 to 4% vs 1 to 1.5%.</span><span class="row matters"><b>Why it matters:</b> Breakdowns are often active over night or at the morning start, when the train stands. The model may partly learn "night = risky" instead of a technical fault.</span><span class="row caveat"><b>Careful:</b> Time of day is a confounder to keep in mind for Phase 2.</span></li>
+        <li><span class="pn">Pieces per day<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_coverage.png" alt="Pieces per day" loading="lazy"></figure><span class="row read"><b>How to read:</b> number of 6-minute pieces per day (blue: training months, orange: test months); red dots mark days with breakdown pieces (NB03a).</span><span class="row"><b>What it shows:</b> About 178 pieces per day (median 196); 571 breaks of more than an hour (360 training, 211 test), median 2.8 h, longest 6.9 days.</span><span class="row matters"><b>Why it matters:</b> The train does not run around the clock, so gaps in the data are normal. Later analyses never draw lines across them and treat them explicitly.</span></li>
+        <li><span class="pn">Time of day<span class="kind">Plot</span></span><figure class="pf"><img src="figs/nb03_hour.png" alt="Time of day: Random Forest probability per hour" loading="lazy"><img src="figs/nb03_hour_fail.png" alt="Time of day: share of breakdown pieces per hour" loading="lazy"></figure><span class="row read"><b>How to read:</b> first: average Random Forest probability per hour (NB03b); second: share of breakdown pieces per hour (NB03a).</span><span class="row"><b>What it shows:</b> Both peak between 2 and 8 in the morning: probability about 0.12 vs 0.05 during the day, breakdown share 3 to 4% vs 1 to 1.5%.</span><span class="row matters"><b>Why it matters:</b> Breakdowns are often active over night or at the morning start, when the train stands. The model may partly learn "night = risky" instead of a technical fault.</span><span class="row caveat"><b>Careful:</b> Time of day is a confounder to keep in mind for Phase 2.</span></li>
       </ul></div>
     <div class="learned"><h3>What the results mean</h3>
       <ul>
@@ -440,7 +438,7 @@ ul.feats .where { font-family: var(--f-mono); font-size: 12.5px; color: var(--mu
         <li><b>Only FC18 gets shakier before breakdowns:</b> rising variation is not a general warning sign on this train.</li>
         <li><b>9 groups react to 2025:</b> these groups may follow the changed behaviour of the train rather than breakdowns, so they need extra care.</li>
       </ul>
-      <p class="sum">In short: the computer found meaningful sensor groups on its own; they mostly recognise breakdowns, and two warn a few hours ahead. Every group with its features is described <a href="#groups">below</a>. A simpler diagram of this notebook is <a href="https://claude.ai/artifact/3UqaQVX6qUV1A6Qo7h5Cws">on its own page</a>.</p></div>
+      <p class="sum">In short: the computer found meaningful sensor groups on its own; they mostly recognise breakdowns, and two warn a few hours ahead. Every group with its features is described <a href="#groups">below</a>.</p></div>
   </section>
 
   <!-- NB05 -->
