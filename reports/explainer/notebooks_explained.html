@@ -209,7 +209,7 @@ ul.feats .where { font-family: var(--f-mono); font-size: 12.5px; color: var(--mu
       <span><i class="sw analysis"></i>Main analysis</span>
       <span><i class="sw wait"></i>Waiting (Phase 2 or experts)</span>
     </div>
-    <figcaption>Arrows show the reading order. The grouping (NB03a, NB04, NB05) starts from the datasets that NB02a builds; the old models (NB02b, NB03b) are a separate branch that NB05 only uses for comparison. All 19 sensor groups are described in <a href="#groups">their own section</a>.</figcaption>
+    <figcaption>Arrows show the reading order. The grouping (NB03a, NB04, NB05) starts from the datasets that NB02a builds; the old models (NB02b, NB03b) are a separate branch that NB05 only uses for comparison. NB06 then checks whether the results depend on the choices made in NB04. All 19 sensor groups are described in <a href="#groups">their own section</a>.</figcaption>
   </figure>
 
   <!-- NB01 -->
@@ -491,7 +491,6 @@ ul.feats .where { font-family: var(--f-mono); font-size: 12.5px; color: var(--mu
       <ul>
         <li><b>15 groups pass on training, 3 hold on the hidden breakdowns:</b> most patterns do not carry over to new breakdowns. FC5, FC7 and FC8 are the most trustworthy candidates for the subsystem datasets.</li>
         <li><b>Not luck, but tied to their time:</b> a permutation test moves each group's alarms to random other times 2,000 times. All 15 groups are clearly better than luck on the training breakdowns (the same 15 the 1.5 rule picked), but only FC5 and FC7 are also significant on the hidden breakdowns (FC8 is just short). Most groups are real for 2024 and stop working in 2025.</li>
-        <li><b>Counting each sensor once:</b> if the lowest, highest and average value of a sensor are merged, 19 groups become 10. FC5 survives unchanged, but FC7 disappears: its signal is the combination of a dip in one sensor with a spike in another, which only shows when the summaries are kept apart.</li>
         <li><b>The hidden-test check is strict:</b> 42% of test pieces lie near a breakdown, so failing it does not prove a group useless. The experts make the final call.</li>
         <li><b>FC2, FC6 and FC18 sit behind false alarms:</b> they may be normal operating situations. If the experts confirm this, leaving them out could reduce false alarms, which is exactly what RQ2 tests.</li>
         <li><b>Spring-brake pressure falling to about 0:</b> a very strong deviation, but FC7 and FC8 fire mostly while the train stands. Because a spring brake is applied by releasing air, this can be the parking brake, for example a train parked because of the fault. Real pressure loss, sensor dropout or parking brake: the experts decide.</li>
@@ -501,6 +500,41 @@ ul.feats .where { font-family: var(--f-mono); font-size: 12.5px; color: var(--mu
       </ul>
       <p class="sum">In short: 3 of 19 groups are reliable, the old model barely uses them, and the train's air system wore out slowly over the year. All of this goes to the experts in a 13-page report.</p></div>
   </section>
+
+  <!-- NB06 -->
+  <section class="nb" id="nb06" aria-labelledby="h06">
+    <div class="nb-head">
+      <div class="tagrow"><span class="tag analysis">Main analysis</span><span class="file">06_robustness_checks.ipynb</span></div>
+      <h2 id="h06">NB06 · Do the results depend on our choices?</h2>
+    </div>
+    <p class="question"><b>Question:</b> If we had made a different choice somewhere in the pipeline, would we still find the same reliable groups?</p>
+    <div class="cols">
+      <div>
+        <h3>Steps</h3>
+        <ol>
+          <li>Repeat the search with stricter and looser rules for "unusual" (how far from normal, how many values at once).</li>
+          <li>Cut the group tree at other heights.</li>
+          <li>Group whole sensors instead of their summaries (lowest, highest, average).</li>
+        </ol>
+        <p>Every check uses exactly the same scoring as NB05, and none of them changes the official groups or the expert sheet.</p>
+      </div>
+      <div>
+        <h3>What the checks show</h3>
+        <ul>
+          <li><b>Other rules for "unusual":</b> the groups stay very similar (agreement 0.81 to 0.97). FC7 stays reliable in all 9 settings, FC5 and FC8 in 7 of 9.</li>
+          <li><b>Other tree heights:</b> FC7 keeps the same members up to 0.84, FC8 up to 0.76; FC5 joins FC4 just above the chosen height and then gets weaker.</li>
+          <li><b>Counting each sensor once:</b> if the lowest, highest and average value of a sensor are merged, 19 groups become 10. FC5 survives unchanged, but FC7 disappears: its signal is the combination of a dip in one sensor with a spike in another, which only shows when the summaries are kept apart.</li>
+          </ul>
+      </div>
+    </div>
+    <div class="learned"><h3>What the results mean</h3>
+      <ul>
+        <li><b>FC5 is the most robust finding:</b> it survives every check. FC7 survives all checks except counting whole sensors, because its signal is a dip in one sensor together with a spike in another.</li>
+        <li><b>The choices in NB04 are not lucky picks:</b> nearby choices give similar groups and the same reliable ones.</li>
+      </ul>
+    </div>
+  </section>
+
 
   <section class="groups" id="groups" aria-labelledby="hgroups">
     <div class="nb-head">

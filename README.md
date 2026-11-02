@@ -161,20 +161,24 @@ Applies the existing RF and LSTM-AE to the full period (problem analysis; not an
 
 - **Event-level scorecard per FC** (Helm 2025; RAMS 2026): alarm episodes with persistence filter, early/late hits, false alarms, drift-controlled lift, 24 h lead time.
 - **KEEP verdict on train events only, test events as a check:** KEEP if lift ≥ 1.5 and ≥ 3 events covered on the **10 train events**; the same rule is then checked on the **11 test events**. 15 of 19 FCs are KEEP on train, but only **3 hold on the test events: FC7** (train lift 4.4 / test 2.4, 1 false alarm), **FC5** (3.7 / 1.9, lead ~15 h) and **FC8** (spring-brake pressure min, 2.5 / 1.5). The other 12 fall to chance level in the test period (7 of them drift-flagged). Note: 42% of test windows lie near a failure (train: 19%), so test lift is capped near 2.4 and the check is strict.
+- **Permutation test = official verdict** (§3.1): each FC's activation series is shifted circularly along the training windows (2,000 shifts, minimum 7 days) and its train lift compared with the shifted lifts; p-values corrected for 19 tests (Benjamini-Hochberg; Holm reported). KEEP = BH q < 0.05 and >= 3 covered train events. It selects **the same 15 FCs** as the lift >= 1.5 rule, so that rule corresponds to a 5% false-discovery rate; with Holm 5 remain (FC3, FC5, FC6, FC7, FC18). On the test events only **FC5 (q = 0.009) and FC7 (q = 0.038)** are significant; FC8 holds by the lift rule but is borderline (q = 0.054). Most FCs are real on train but do not carry over to 2025 (drift, period-specific patterns) (`permutation_test.csv`).
 - **Prior-work flagged intervals** (the "zoom-in" pipeline from RAMS 2026, p7; current RF, raw scores): RF reaches 11/11 early hits and LSTM-AE 10/11 on the test events. FC2, FC6 and FC18 are over-represented in RF **false alarms**; FC1, FC14 and FC17 mark RF **early hits**. For LSTM-AE, FC1/2/9/10/14/15/17/18/19 mark early hits. This section is re-run after NB02b's grid search.
 - **FC × Wiener Linien failure type:** enrichment in the 24 h before and during failures, per recorded type (evidence for the experts only; no subsystem labels assigned to FCs).
 - **Expert verification sheet** (`outputs/nb05_artifacts/expert_verification_sheet.csv/.xlsx`) with all evidence (including `cohesion`, `lift_train`, `p_bh_train`, `verdict`, `lift_test`, `test_check`, `p_bh_test`, `significant_test`) plus empty expert columns; the RQ1 verification metric and `build_subsystem_datasets()` run once the filled sheet is returned.
 - Deep dives are selected from the data (currently FC7 and FC8).
-- **Robustness of the findings** (§3.1, §3.2): re-cutting the clustering tree at 0.50-0.95, FC7 keeps its members up to 0.84 and FC8 up to 0.76; FC5 merges with FC4 at 0.708 and its test lift then drops from 1.92 to 1.44. Repeating the whole chain for z in {2.5, 3, 3.5} x minimum in {3, 5, 10} gives clusterings close to FC1-FC19 (ARI 0.81-0.97); FC7 is KEEP and holds on test in 9/9 settings, FC8 in 9/9 and 7/9, FC5 in 8/9 and 7/9 (`cluster_sensitivity.png`, `threshold_robustness.csv`).
-- **Useful clusters per threshold setting** (§3.3, 27 settings): at z > 3 the number of KEEP clusters on train stays at 13-17 for minimums 2-10 (official: 15 of 19); higher minimums give fewer clusters whose KEEP clusters raise fewer false alarms (133 -> 54 per 30 normal days from minimum 5 to 15), and only 1-4 KEEP clusters per setting hold on the test events (`useful_clusters_by_threshold.csv/.png`).
-- **Permutation test = official verdict** (§3.4): each FC's activation series is shifted circularly along the training windows (2,000 shifts, minimum 7 days) and its train lift compared with the shifted lifts; p-values corrected for 19 tests (Benjamini-Hochberg; Holm reported). KEEP = BH q < 0.05 and >= 3 covered train events. It selects **the same 15 FCs** as the lift >= 1.5 rule, so that rule corresponds to a 5% false-discovery rate; with Holm 5 remain (FC3, FC5, FC6, FC7, FC18). On the test events only **FC5 (q = 0.009) and FC7 (q = 0.038)** are significant; FC8 holds by the lift rule but is borderline (q = 0.054). Most FCs are real on train but do not carry over to 2025 (drift, period-specific patterns) (`permutation_test.csv`).
-- **Sensor-level check** (§3.5, supervisor feedback on same-sensor aggregations): clustering sensors instead of features (a sensor is active if any aggregation is) on the same anomalous windows gives 10 sensor clusters instead of 19 FCs, all significant on train, only the CW2 compressor sensor (= FC5) also on test. FC7 is only found at feature level: its sensors merge into larger groups when the spring-brake minimum and load-pressure maximum are not kept apart. Same-sensor aggregations inflate cluster sizes, but which aggregation fires carries the signal (`sensor_level_clusters.csv`, `fc_to_sensor_cluster.csv`).
-- **Drift-adapted reference** (§3.6, robustness): re-centring the test-period reference on the median of recent windows (V1: 14 days after the 20 March CUSUM alarm; V2: rolling 30 days), scale kept from training, no labels: anomalies far from failures drop from 27.4% to 16.6% / 19.7%, but the FCs do not improve (V1: only FC5 significant on test; V2: none; V2 also lowers the anomaly rate near failures). Consistent with the drift containing degradation signal, so the official analysis keeps the training reference. A first version that also re-estimated the scale on 14/30 days flagged 70-80% of test windows and was discarded (`drift_adapted_reference.csv`).
 - **Cohesion** (mean pairwise Jaccard of an FC's features on train-period anomalous windows) is in the FC overview and the expert sheet; FC11, FC13-FC17 are loose (0.38-0.49) although their values correlate (0.54-0.95), and none of them holds on test.
 - **Values behind the clusters** (supervisor feedback): top-10 features per FC with normal range vs. value when the FC fires (`fc_top10_features.csv`). In the robust FCs the spring-brake pressure minima fall to about 0 (normal 0.29-0.74, shift -4.3 std) and CW2 compressor switching rises to 4 per window (normal 0-1).
 - **Raw 1-second signals** read back for FC5, FC7, FC8 around one failure each (`fc*_raw_signals.png`). Before the 14 Dec 2024 failure, CW1 spring-brake and load pressure drop to 0 together from about 4 h before onset: real pressure loss or a CW1 signal dropout is a question for the experts.
 - **RF feature importance by FC** (current raw RF): 54% of the importance lies on FC features, mostly FC18, FC6 and FC14; the robust FCs get only 2.4%, and 16% sits on the `_sum` copies (`rf_importance_by_fc.csv`).
 - **Back-calculation of the air system from the raw 1 Hz data** (`daily_physics.csv`): per day and side, compressor on-share, starts per hour, fill rate and pressure loss when standing. **Short term:** aligned around the failures (14 days before to 3 after, relative to each event's own baseline), no quantity changes consistently in the last 3 days for any failure type (Wilcoxon, BH-corrected; `failure_profiles.png`). **Long term:** over the training months the standing pressure loss rises every month (0.0009 to 0.0046 per minute, Kendall τ = 1.0 on monthly medians) and the CW2 side fills more slowly (τ = −0.83) while its compressor runs more. After the 8-week revision of 17–22 April 2025 (the date of the baseline shift in RAMS 2026), CW2 fills normally again and CW1 fills more slowly. Part of the test-period drift may therefore be gradual wear and a repair; this is a question for the experts (`daily_physics_timeline.png`, `long_term_trends.csv`).
+
+
+### Robustness Checks (NB06)
+
+Checks whether the NB04/NB05 results depend on the pipeline choices; same scoring code as NB05 (`src/event_scoring.py`); no official result is changed.
+
+- **Robustness of the findings** (§2 cut height, §1 thresholds): re-cutting the clustering tree at 0.50-0.95, FC7 keeps its members up to 0.84 and FC8 up to 0.76; FC5 merges with FC4 at 0.708 and its test lift then drops from 1.92 to 1.44. Repeating the whole chain for z in {2.5, 3, 3.5} x minimum in {3, 5, 10} gives clusterings close to FC1-FC19 (ARI 0.81-0.97); FC7 is KEEP and holds on test in 9/9 settings, FC8 in 9/9 and 7/9, FC5 in 8/9 and 7/9 (`outputs/nb06_artifacts/`).
+- **Sensor-level check** (§3, supervisor feedback on same-sensor aggregations): clustering sensors instead of features (a sensor is active if any aggregation is) on the same anomalous windows gives 10 sensor clusters instead of 19 FCs, all significant on train, only the CW2 compressor sensor (= FC5) also on test. FC7 is only found at feature level: its sensors merge into larger groups when the spring-brake minimum and load-pressure maximum are not kept apart. Same-sensor aggregations inflate cluster sizes, but which aggregation fires carries the signal (`sensor_level_clusters.csv`, `fc_to_sensor_cluster.csv`).
 
 ---
 
@@ -191,9 +195,11 @@ Kurtulus-thesis/
 │   ├── 03a_feature_exploration.ipynb  # Feature dataset exploration: per-period Cohen's d, group correlation, aggregation redundancy, coverage (feeds NB04)
 │   ├── 03b_baseline_score_analysis.ipynb  # RF / LSTM-AE scores over the full period: train/test shift, hotspots (baseline branch)
 │   ├── 04_anomaly_detection_cluster_analysis.ipynb  # Z-score anomalies, train-only feature clustering (FC1-FC19), temporal + drift analysis
-│   └── 05_pattern_discovery_validation.ipynb  # Event-level FC scoring, prior-model alarms, raw-signal back-calculation, air-system trends, expert sheet
+│   ├── 05_pattern_discovery_validation.ipynb  # Event-level FC scoring, permutation test (official verdict), prior-model alarms, raw-signal back-calculation, air-system trends, expert sheet
+│   └── 06_robustness_checks.ipynb  # Robustness of the findings: anomaly thresholds, cut height, sensor-level clustering
 ├── src/
 │   ├── config.py                   # Paths, documented sensor-group schema, split date
+│   ├── event_scoring.py            # Event-level scoring and permutation-test helpers shared by NB05 and NB06
 │   └── __init__.py
 ├── reports/
 │   ├── generate_expert_review.py   # Builds the Wiener Linien review material into outputs/expert_review/
@@ -209,7 +215,8 @@ Kurtulus-thesis/
 │   ├── nb03a_artifacts/            # Aggregation redundancy plots and recommendation
 │   ├── nb03b_artifacts/            # Full-period score timeline
 │   ├── nb04_artifacts/             # FC1-FC19, activations, canonical failure events, temporal/drift/location tables
-│   ├── nb05_artifacts/             # Scorecard, top-10 values, raw signals, air-system tables, expert verification sheet
+│   ├── nb05_artifacts/             # Scorecard, permutation test, top-10 values, raw signals, air-system tables, expert verification sheet
+│   ├── nb06_artifacts/             # Robustness tables and plots (thresholds, cut height, sensor level)
 │   └── expert_review/              # Everything to send to Wiener Linien: review PDF, workflow PDF, verification sheet
 ├── thesis-latex/                   # LaTeX thesis (separate git repo, synced with Overleaf)
 ├── requirements.txt
@@ -227,6 +234,7 @@ Kurtulus-thesis/
    **Baseline Score Analysis (NB03b)**: the RF and LSTM-AE applied to the full period: score timeline, train/test shift, hotspots, LSTM-AE input checks; problem analysis only, not used by the clustering
 5. **Anomaly Detection & Feature Clustering (NB04)**: canonical failure events, z-score anomaly windows, feature clustering via Jaccard distance fitted on the train period only (FC1-FC19), cluster validation, drift-controlled temporal pattern analysis, volatility lead-up, drift checks
 6. **Pattern Discovery & Validation (NB05)**: event-level scoring of each FC (KEEP decided on train events, checked on test events), FCs behind the RF/LSTM-AE early hits and false alarms, FC vs. recorded failure type, expert verification sheet and RQ1 metric
+   **Robustness Checks (NB06)**: anomaly thresholds, cut height and sensor-level clustering, scored with the NB05 rules; the official FCs and verdicts are not changed
 7. **Expert verification (RQ1)**: Wiener Linien experts assign subsystems to FCs via the verification sheet
 8. **Modeling & Evaluation (Phase 2, RQ2)**: run NB02b, then subsystem-aware vs. full-feature representations under identical conditions; the test period is used only for this final comparison
 
@@ -238,11 +246,11 @@ Kurtulus-thesis/
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the pipeline in order. Clustering branch: 01 -> 02a -> 03a -> 04 -> 05;
+# Run the pipeline in order. Clustering branch: 01 -> 02a -> 03a -> 04 -> 05 -> 06;
 # baseline branch: 02a -> 02b -> 03b (NB05 sections 4 and 7.3 read the baseline models)
 cd notebooks
 for nb in 01_data_exploration 02a_dataset_creation 02b_baselines 03a_feature_exploration 03b_baseline_score_analysis \
-          04_anomaly_detection_cluster_analysis 05_pattern_discovery_validation; do
+          04_anomaly_detection_cluster_analysis 05_pattern_discovery_validation 06_robustness_checks; do
   jupyter nbconvert --to notebook --execute --inplace $nb.ipynb --ExecutePreprocessor.timeout=3600
 done
 ```
