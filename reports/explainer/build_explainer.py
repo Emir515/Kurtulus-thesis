@@ -42,7 +42,7 @@ SOURCES = {
     'nb04_coactivation.png': (N4, 'Jaccard Similarity Matrix Ordered by Feature Cluster', 0),
     'nb04_cohesion.png': (N4, 'Cluster Cohesion: How Tightly', 0),
     'nb04_heuristics.png': (N4, 'STATISTICAL COMPARISON', 0),
-    'nb04_binary_continuous.png': (N4, 'Binary vs Continuous: Do binary groups', 0),
+    'nb04_binary_continuous.png': (N4, 'Binary cohesion vs continuous correlation per FC', 0),
     'nb04_opstate.png': (N4, 'Operational state when each cluster fires', 0),
     'nb04_phases.png': (N4, 'Drift-controlled FC enrichment by phase', 0),
     'nb04_examples.png': (N4, 'Drift-controlled FC enrichment by phase', 1),

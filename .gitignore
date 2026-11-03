@@ -23,3 +23,7 @@ thesis-latex/
 # Generated report files (rebuild with the scripts in reports/)
 reports/explainer/figs/
 reports/explainer/notebooks_explained_standalone.html
+
+# Generated study guides (rebuild with the scripts in reports/study/)
+reports/study/*.html
+reports/study/*.pdf
