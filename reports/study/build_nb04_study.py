@@ -127,13 +127,15 @@ BLOCKS = [
               '<li>90 of 258 features are never unusual in these windows.</li></ul>',
         why='You can already see the outline of the later groups.', careful=''), None),
 
-    ('b11', 'Output 2.2 · Which unusual features are near trouble?', 'Deeper look: which activated', dict(
-        what='For the top-30 features: in how many of their unusual windows is there a trouble tag?',
-        read='<b>Fail Rate</b> = share of the feature\'s unusual windows that are trouble windows. *** = above the average of 6.0%.',
-        shows='<ul><li>The very frequent brake cylinder features are mostly <b>below</b> 6%: they fire a lot, but rarely near trouble.</li>'
-              '<li>The MW3 sensors (spring brake, load, valve, braking force) are at 12–20%: much more often near trouble.</li></ul>',
-        why='Frequent is not the same as useful. A first hint which features matter.',
-        careful='This table counts all unusual windows (training and test months) and uses the trouble tags. It is descriptive only and not used to build the groups.'), None),
+    ('b11', 'Output 2.2 · Which anomalous features are near trouble?', 'Deeper look: which activated', dict(
+        what='For every feature that is anomalous in at least 50 anomalous windows: in how many of those windows is there a trouble tag? Sorted by that share, so rare but failure-related features are on top.',
+        read='<b>Fail Rate</b> = share of the feature’s anomalous windows that are trouble windows. *** = above the average of 6.0%. Features with fewer than 50 windows are skipped, because a share from a handful of windows is unstable.',
+        shows='<ul><li>138 of 258 features reach 50 windows; 104 of them are above the 6% average.</li>'
+              '<li>On top: <code>CW1_LOAD_PRESSURE_BOGIE2_max</code> (83%) and <code>CW1_SPRING_BRAKE_PRESSURE_BOGIE2_min</code> (63%): exactly the two features of FC7.</li>'
+              '<li>Next: the lowest spring-brake pressure on several cars (MW1, MW2, MW3, MW4, CW2: 22–44%), the later FC8 and FC6.</li>'
+              '<li>The very frequent brake-cylinder pressures (FC1, FC19) are not in this list: they fire often but are below average (about 4–5%).</li></ul>',
+        why='Frequent is not the same as useful: the most failure-related features are rare ones.',
+        careful='This table counts all anomalous windows (training and test months) and uses the trouble tags. It is descriptive only and not used to build the groups.'), None),
 
     ('b12', 'Output 2.3 · The same, per sensor', 'Group by physical sensor', dict(
         what='Adds up the unusual counts of all summaries (min, max, mean) of each physical sensor.',

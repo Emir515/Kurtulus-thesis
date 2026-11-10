@@ -3,10 +3,12 @@
 Writes to outputs/expert_review/:
   WL_Expert_Review_NB04.pdf        13-page review document (clusters, evidence, raw signals, air system, questions)
   NB04_Workflow_and_Metrics.pdf    3-page backup: NB04 workflow and validation metrics
-  expert_verification_sheet.xlsx   copy of the sheet from NB05 (the experts fill this one in)
+  expert_verification_sheet.xlsx   simple sheet: the clusters and their sensors only
 
 Run after NB04 and NB05:  python reports/generate_expert_review.py
-The filled sheet goes back to outputs/nb05_artifacts/expert_verification_sheet_FILLED.csv for NB05.
+Returned sheet: python reports/generate_expert_review.py --import-filled <file.xlsx>
+converts it to outputs/nb05_artifacts/expert_verification_sheet_FILLED.csv for NB05 §8 (needs openpyxl).
+The detailed sheet with all evidence stays in outputs/nb05_artifacts/.
 """
 import json, os, shutil, sys
 import numpy as np
@@ -19,11 +21,36 @@ from matplotlib.patches import FancyBboxPatch, Patch
 from scipy.stats import fisher_exact
 
 sys.stdout.reconfigure(encoding='utf-8')
-ROOT = sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+IMPORT = sys.argv[2] if len(sys.argv) > 2 and sys.argv[1] == '--import-filled' else None
+ROOT = sys.argv[1] if len(sys.argv) > 1 and not IMPORT else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'outputs')
 A4, A5 = os.path.join(OUT, 'nb04_artifacts'), os.path.join(OUT, 'nb05_artifacts')
 REVIEW = os.path.join(OUT, 'expert_review')
 os.makedirs(REVIEW, exist_ok=True)
+
+SHEET_TO_NB05 = {
+    'Cluster': 'FC',
+    'Number of features': 'n_features',
+    'Do these sensors belong together physically? (Y/N)': 'expert_physically_coherent',
+    'Subsystem (e.g. Brake, APU, Leveling, other, unclear)': 'expert_subsystem',
+    'Known failure mode this could indicate (optional)': 'expert_failure_mode',
+    'Keep this cluster for the next step? (Y/N)': 'expert_keep',
+    'Comment': 'expert_comment',
+}
+
+def import_filled(xlsx_path):
+    """Convert the returned simple sheet to the CSV that NB05 §8 reads (needs openpyxl to read .xlsx)."""
+    df = pd.read_excel(xlsx_path, sheet_name='Clusters', header=1)
+    out = df.rename(columns=SHEET_TO_NB05)[list(SHEET_TO_NB05.values())]
+    dest = os.path.join(A5, 'expert_verification_sheet_FILLED.csv')
+    out.to_csv(dest, index=False)
+    print(f'Wrote {dest}: {len(out)} rows. Re-run NB05 §8 for the RQ1 metric.')
+
+
+
+if IMPORT:
+    import_filled(IMPORT)
+    sys.exit()
 
 # ── Data ──
 clusters = {int(k): v for k, v in json.load(open(os.path.join(A4, 'heuristic_a.json'))).items()}
@@ -95,7 +122,7 @@ def title(fig, main, sub=None):
 
 
 def footer(fig, n):
-    fig.text(0.04, 0.025, f'Emirhan Kurtulus, TU Wien, Master Thesis | Feature clusters {FC_RANGE} are data-driven and carry no subsystem label',
+    fig.text(0.04, 0.025, 'Emirhan Kurtulus, Master Thesis, TU Wien',
              fontsize=7.5, color=GREY)
     fig.text(0.96, 0.025, str(n), fontsize=8, color=GREY, ha='right')
 
@@ -137,9 +164,9 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
     # Page: overview
     page += 1
     fig = plt.figure(figsize=LAND)
-    title(fig, 'Predictive Maintenance: Feature Cluster Analysis', 'Expert review document for Wiener Linien | Emirhan Kurtulus, TU Wien, Master Thesis')
+    title(fig, 'Predictive Maintenance: Feature Cluster Analysis', 'Emirhan Kurtulus, Master Thesis TU Wien, material for the review with Wiener Linien')
     text_block(fig, 0.05, 0.84, [
-        ('OVERVIEW', {'weight': 'bold', 'color': NAVY, 'size': 12, 'gap': 0.045}),
+        ('WHAT I DID', {'weight': 'bold', 'color': NAVY, 'size': 12, 'gap': 0.045}),
         f'Data: 101 sensor channels of one MetroAT vehicle, June 2024 - June 2025, aggregated into {n_win:,} windows of 6 min',
         f'Recorded failures: {len(fail_events)} events ({n_tr} in the training period until 11 Feb 2025, {n_te} in the test period after): '
         f'{types.get("Brake System Failure", 0)} brake, {types.get("Compressor Module Failure", 0)} compressor, {types.get("Leveling System Failure", 0)} leveling',
@@ -149,19 +176,19 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
         f'Feature clusters: {len(fc_ids)} ({FC_RANGE}), {sum(map(len, clusters.values()))} features that fire together, '
         f'found on the {n_anom_train:,} anomalous windows of the training period only',
         ('', {'gap': 0.02}),
-        ('IMPORTANT', {'weight': 'bold', 'color': NAVY, 'size': 12, 'gap': 0.045}),
-        'The clusters are found from the data alone. They are NOT assigned to subsystems by us:',
-        'deciding which subsystem a cluster belongs to, and whether it makes physical sense, is the purpose of this review.',
-        'The test period (from 12 Feb 2025) was not used to form or select the clusters; it only serves as a check.',
+        ('PLEASE NOTE', {'weight': 'bold', 'color': NAVY, 'size': 12, 'gap': 0.045}),
+        'I found the clusters from the data only and did not assign them to any subsystem.',
+        'Whether a cluster makes sense physically and which subsystem it belongs to is what I would like to ask you.',
+        'I only used the training period to build the clusters; the test period (from 12 Feb 2025) is only used as a check.',
         ('', {'gap': 0.02}),
-        ('WHAT WE ASK YOU', {'weight': 'bold', 'color': NAVY, 'size': 12, 'gap': 0.045}),
+        ('MY QUESTIONS', {'weight': 'bold', 'color': NAVY, 'size': 12, 'gap': 0.045}),
         '1. Do the sensors in each cluster belong together physically? (full sensor lists on page 3)',
         '2. Which subsystem does each cluster belong to?',
         '3. Which clusters correspond to known failure modes?',
         '4. Are clusters that mostly appear in false alarms (page 6) normal operating patterns, e.g. braking manoeuvres?',
         '5. Which clusters should be kept for building subsystem-specific datasets?',
         ('', {'gap': 0.02}),
-        ('Answers go into the accompanying sheet: expert_verification_sheet.xlsx (one row per cluster).', {'color': GREY}),
+        ('You can fill in your answers in the sheet expert_verification_sheet.xlsx (one row per cluster).', {'color': GREY}),
     ])
     footer(fig, page)
     pdf.savefig(fig); plt.close(fig)
@@ -169,7 +196,7 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
     # Page: cluster table
     page += 1
     fig = plt.figure(figsize=LAND)
-    title(fig, f'All {len(fc_ids)} Feature Clusters', 'Sensors, location, failure association, temporal pattern and event-level verdict')
+    title(fig, f'All {len(fc_ids)} Feature Clusters', 'Sensors, where they are on the train, link to failures and how they did on the test period')
     ax = fig.add_axes([0.03, 0.12, 0.94, 0.75]); ax.axis('off')
     rows, colors = [], []
     for fc in fc_ids:
@@ -207,7 +234,7 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
     # Page: full sensor lists
     page += 1
     fig = plt.figure(figsize=LAND)
-    title(fig, 'Full Sensor List per Cluster', 'All features of each cluster (sensor name + window statistic) for question 1: do they belong together?')
+    title(fig, 'Full Sensor List per Cluster', 'All features of each cluster (sensor + statistic of the 6-min window)')
     lines = []
     for fc in fc_ids:
         by_sensor = {}
@@ -241,7 +268,7 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
     # Page: anomalies vs failures
     page += 1
     fig = plt.figure(figsize=LAND)
-    title(fig, 'Are Anomalies Linked to Failures?', 'Statistical evidence')
+    title(fig, 'Are the Anomalies Linked to Failures?', 'Anomalous windows compared with the failure-labelled windows')
     ax = fig.add_axes([0.06, 0.15, 0.27, 0.65])
     vals = [100 * rate_anom, 100 * rate_non, 100 * n_fail / n_win]
     ax.bar(['Anomalous\nwindows', 'Other\nwindows', 'All\nwindows'], vals, color=[RED, GREY, NAVY])
@@ -265,7 +292,7 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
     page += 1
     fig = plt.figure(figsize=LAND)
     title(fig, 'When Do Clusters Fire Relative to a Failure?',
-          'Activation rate relative to normal periods of the same period (train/test), which corrects for the test-period drift')
+          'How often a cluster fires compared to normal times in the same period (train or test)')
     ax = fig.add_axes([0.06, 0.14, 0.40, 0.68])
     enr = temporal[['enrich_early', 'enrich_imminent', 'enrich_during']].astype(float)
     im = ax.imshow(np.log2(enr.clip(1 / 16, 16)).values, cmap='RdBu_r', vmin=-3, vmax=3, aspect='auto')
@@ -297,7 +324,7 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
     page += 1
     fig = plt.figure(figsize=LAND)
     title(fig, 'Which Clusters Sit Behind the Existing Models\' Alarms?',
-          'Alarms of the Random Forest and LSTM autoencoder baselines (test period): correct early warnings vs. false alarms')
+          'I looked at the alarms of the earlier Random Forest and LSTM autoencoder (test period): correct early warnings vs. false alarms')
     for k, (m, t) in enumerate(prior.items()):
         ax = fig.add_axes([0.07 + 0.47 * k, 0.14, 0.38, 0.69])
         y = np.arange(len(t))
@@ -353,7 +380,7 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
     page += 1
     fig = plt.figure(figsize=LAND)
     title(fig, 'Examples Around a Recorded Failure',
-          'The clusters that also hold on the test period; z-scores of the cluster features, markers = windows in which the cluster fires')
+          'The clusters that still work on the test period; z-scores of their features, markers = windows where the cluster fires')
     n_ex = max(len(examples), 1)
     h = 0.74 / n_ex
     for k, (fc, name, col) in enumerate(examples):
@@ -385,7 +412,7 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
     page += 1
     fig = plt.figure(figsize=LAND)
     title(fig, 'Values Behind the Robust Clusters',
-          'Top features of the clusters that hold on the test period: normal range vs. value when the cluster fires')
+          'Main features of the clusters that still work on the test period: normal range vs. value when the cluster fires')
     ax = fig.add_axes([0.04, 0.22, 0.92, 0.64]); ax.axis('off')
     rows = [[r.FC, short(r.feature), f'{100 * r.active_share:.0f}%', f'{r.normal_median:.3g}',
              f'{r.normal_p05:.3g} - {r.normal_p95:.3g}', f'{r.fc_active_median:.3g}', f'{r.shift_in_std:+.1f}']
@@ -417,7 +444,7 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
             continue
         page += 1
         fig = plt.figure(figsize=LAND)
-        title(fig, 'Raw 1-Second Signals Before a Failure', 'Back to the underlying values of the robust clusters')
+        title(fig, 'Raw 1-Second Signals Before a Failure', 'What the original data looks like for these clusters')
         rects = [[0.04, 0.67, 0.92, 0.20], [0.04, 0.12, 0.92, 0.52]] if len(chunk) == 2 else [[0.04, 0.115, 0.92, 0.76]]
         for k, rect in zip(chunk, rects):
             ax = fig.add_axes(rect); ax.imshow(imgs[k]); ax.axis('off')
@@ -431,7 +458,7 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
         page += 1
         fig = plt.figure(figsize=LAND)
         title(fig, 'Compressor Work and Air Pressure Over the Whole Year',
-              'Daily values computed from the raw 1-second data, per side (CW1 solid, CW2 dashed)')
+              'I computed these per day from the raw 1-second data, per side (CW1 solid, CW2 dashed)')
         ax = fig.add_axes([0.04, 0.17, 0.92, 0.70]); ax.imshow(plt.imread(phys_png)); ax.axis('off')
         text_block(fig, 0.05, 0.155, [
             'Over the training months the pressure loss when standing (bottom) rises every month (0.0009 to 0.0046 per minute), and the CW2 side fills more slowly',
@@ -444,23 +471,23 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
     # Page: summary
     page += 1
     fig = plt.figure(figsize=LAND)
-    title(fig, 'Summary & Questions for Expert Review')
+    title(fig, 'Summary and Questions')
     robust_lines = [f'   {k}: {", ".join(short(s) for s in sensors_of(int(k[2:]))[:3])}{" ..." if len(sensors_of(int(k[2:]))) > 3 else ""} | '
-                    f'{r.lift_train:.1f}x chance on train failures, {r.lift_test:.1f}x on test failures, {int(r.false_alarms)} false alarms'
+                    f'{r.lift_train:.1f}x chance on train failures, {r.lift_test:.1f}x on test failures, {int(r.false_alarms)} false alarm{"" if int(r.false_alarms) == 1 else "s"}'
                     for k, r in robust.iterrows()]
     text_block(fig, 0.05, 0.86, [
-        ('OBSERVATIONS (not conclusions)', {'weight': 'bold', 'color': NAVY, 'size': 12, 'gap': 0.042}),
+        ('WHAT I SEE SO FAR (to be confirmed)', {'weight': 'bold', 'color': NAVY, 'size': 12, 'gap': 0.042}),
         f'1. {len(fc_ids)} clusters from {sum(map(len, clusters.values()))} features; {int((fcs.p_adj < 0.05).sum())} are significantly linked to failure-labelled windows.',
-        '2. No cluster gives a multi-day early warning (1-6 days before). '
-        + (f'{" and ".join(precursor)} often fire in the last 24 h before a failure (short-term precursors).' if precursor else ''),
-        f'3. {len(detection)} clusters fire mainly during failures (useful for diagnosis, not prediction).',
+        '2. None of the clusters warns several days ahead (1-6 days before). '
+        + (f'{" and ".join(precursor)} often fire in the last 24 h before a failure.' if precursor else ''),
+        f'3. {len(detection)} clusters fire mainly while the failure is already there (more for diagnosis than prediction).',
         f'4. Only {" and ".join(both_periods)} are more active on failure days in both the training and the test period.',
-        f'5. {len(keep)} clusters pass the event-level check on the training-period failures, but only {len(robust)} also hold on the test period:',
+        f'5. {len(keep)} clusters work on the training failures, but only {len(robust)} still work on the test period:',
         *robust_lines,
-        f'6. The other {len(train_only)} drop to chance level in the test period; {int(train_only.drift_flag.sum())} of them are flagged as possibly drift-driven.',
+        f'6. The other {len(train_only)} are close to chance on the test period; for {int(train_only.drift_flag.sum())} of them this could be the drift.',
         f'7. {len(drift_fcs)} clusters became much more active in 2025 without failures nearby (possible drift).',
         ('', {'gap': 0.015}),
-        ('QUESTIONS FOR WIENER LINIEN', {'weight': 'bold', 'color': NAVY, 'size': 12, 'gap': 0.042}),
+        ('MY QUESTIONS TO YOU', {'weight': 'bold', 'color': NAVY, 'size': 12, 'gap': 0.042}),
         '1. Do the sensors in each cluster belong together physically (page 3)?',
         '2. Which subsystem does each cluster belong to?',
         '3. Which clusters correspond to known failure modes (page 7)? Is it plausible that '
@@ -581,7 +608,68 @@ with PdfPages(os.path.join(REVIEW, 'NB04_Workflow_and_Metrics.pdf')) as pdf:
         y -= 0.1
     pdf.savefig(fig); plt.close(fig)
 
-for f in ('expert_verification_sheet.xlsx', 'expert_verification_sheet.csv'):
-    if os.path.exists(os.path.join(A5, f)):
-        shutil.copy2(os.path.join(A5, f), os.path.join(REVIEW, f))
-print(f'Wrote outputs/expert_review/: WL_Expert_Review_NB04.pdf ({page} pages), NB04_Workflow_and_Metrics.pdf (3 pages), expert sheet copy')
+# ── Simple expert sheet: clusters and their sensors only, plus the answer columns ──
+# Friendly column names for the expert; SHEET_TO_NB05 maps them back to the names NB05 expects in
+# expert_verification_sheet_FILLED.csv (run: python reports/generate_expert_review.py --import-filled <returned.xlsx>).
+CAR_ORDER = {c: i for i, c in enumerate(['CW1', 'MW1', 'MW2', 'MW3', 'MW4', 'CW2'])}
+
+
+def sensor_lines(fc):
+    """One line per physical sensor, with the window statistics of it that are in the cluster."""
+    by_sensor = {}
+    for f in clusters[fc]:
+        sensor, stat = f.rsplit('_', 1)
+        by_sensor.setdefault(sensor, []).append(stat)
+    order = {'min': 0, 'mean': 1, 'max': 2}
+    keys = sorted(by_sensor, key=lambda s: (CAR_ORDER.get(s.split('_')[0], 9), s))
+    return '\n'.join(f'{s} ({", ".join(sorted(by_sensor[s], key=lambda x: order.get(x, 3)))})' for s in keys)
+
+
+def write_simple_sheet(path):
+    """Clusters and their sensors only (no answer columns); a second tab explains the window statistics."""
+    rows = []
+    for fc in fc_ids:
+        k = f'FC{fc}'
+        rows.append({'Cluster': k, 'Number of features': len(clusters[fc]),
+                     'Number of sensors': len({f.rsplit('_', 1)[0] for f in clusters[fc]}),
+                     'Cars': location.loc[k, 'cars'], 'Sensors (window statistics in brackets)': sensor_lines(fc)})
+    df = pd.DataFrame(rows)
+    with pd.ExcelWriter(path, engine='xlsxwriter') as xw:
+        df.to_excel(xw, sheet_name='Clusters', index=False, startrow=1)
+        wb, ws = xw.book, xw.sheets['Clusters']
+        head = wb.add_format({'bold': True, 'text_wrap': True, 'valign': 'top', 'bg_color': '#DCE6F1', 'border': 1})
+        cell = wb.add_format({'text_wrap': True, 'valign': 'top', 'border': 1})
+        note = wb.add_format({'italic': True, 'font_color': '#555555'})
+        ws.write(0, 0, 'One row per cluster: the sensors whose features often become anomalous together (found from the data only).', note)
+        for j, (col, w) in enumerate(zip(df.columns, [9, 10, 10, 22, 70])):
+            ws.write(1, j, col, head)
+            ws.set_column(j, j, w)
+        for i, r in enumerate(df.itertuples(index=False), start=2):
+            ws.set_row(i, max(30, 15 * (r[4].count('\n') + 1)))
+            for j, v in enumerate(r):
+                ws.write(i, j, v, cell)
+        ws.freeze_panes(2, 1)
+
+        notes = wb.add_worksheet('Notes')
+        bold = wb.add_format({'bold': True, 'valign': 'top'})
+        wrap = wb.add_format({'text_wrap': True, 'valign': 'top'})
+        notes.set_column(0, 0, 22); notes.set_column(1, 1, 100)
+        for i, (a, b) in enumerate([
+                ('Cluster', 'A group of sensor features that often become unusual at the same time (more than 3 standard deviations from normal). '
+                            'Found from the training period only (Jun 2024 - Feb 2025), without using knowledge about the vehicle.'),
+                ('Window statistics', 'Each sensor is summarised per 6-minute window: min = lowest value, max = highest value, mean = average, '
+                                      'flips = number of on/off switches.'),
+                ('Cars', 'CW1, MW1, MW2, MW3, MW4, CW2; BOGIE1 / BOGIE2 = bogie of the car.')]):
+            notes.write(i, 0, a, bold); notes.write(i, 1, b, wrap); notes.set_row(i, 36)
+    return df
+
+
+simple = write_simple_sheet(os.path.join(REVIEW, 'expert_verification_sheet.xlsx'))
+stale = os.path.join(REVIEW, 'expert_verification_sheet.csv')
+if os.path.exists(stale):  # old copy of the detailed sheet; that one stays in outputs/nb05_artifacts/
+    try:
+        os.remove(stale)
+    except PermissionError:
+        print(f'Note: close {os.path.basename(stale)} (open in another program) and delete it; it is the old detailed sheet.')
+print(f'Wrote outputs/expert_review/: WL_Expert_Review_NB04.pdf ({page} pages), NB04_Workflow_and_Metrics.pdf (3 pages), '
+      f'expert_verification_sheet.xlsx ({len(simple)} clusters, sensors only)')
