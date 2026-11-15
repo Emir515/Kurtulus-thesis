@@ -205,10 +205,10 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
         side = 'A' if location.loc[k, 'side_A_share'] == 1 else 'B' if location.loc[k, 'side_B_share'] == 1 else 'A+B'
         rows.append([k, len(clusters[fc]), len(sens), ', '.join(short(s) for s in sens[:3]) + (' ...' if len(sens) > 3 else ''),
                      side, f'{fcs.loc[k, "fail_rate"]:.1f}% {sig(fcs.loc[k, "p_adj"])}', temporal.loc[k, 'pattern'],
-                     verdict_text(k), 'yes' if drift.loc[k, 'drift_flag'] else ''])
+                     verdict_text(k), f'x{drift.loc[k, "test_train_ratio"]:.1f}' + ('*' if drift.loc[k, 'few_windows'] else '')])
         colors.append(pattern_col[temporal.loc[k, 'pattern']])
     tab = ax.table(cellText=rows, colLabels=['FC', 'Feats', 'Sensors', 'Main sensors', 'Chain', 'Fail rate',
-                                             'Temporal pattern', 'Verdict / test', 'Drift'],
+                                             'Temporal pattern', 'Verdict / test', 'Test/train'],
                    colWidths=[0.05, 0.05, 0.06, 0.38, 0.05, 0.09, 0.14, 0.10, 0.05], loc='upper center', cellLoc='left')
     tab.auto_set_font_size(False); tab.set_fontsize(7.4); tab.scale(1, 1.25)
     for (r, c), cell in tab.get_celld().items():
@@ -484,8 +484,8 @@ with PdfPages(os.path.join(REVIEW, 'WL_Expert_Review_NB04.pdf')) as pdf:
         f'4. Only {" and ".join(both_periods)} are more active on failure days in both the training and the test period.',
         f'5. {len(keep)} clusters work on the training failures, but only {len(robust)} still work on the test period:',
         *robust_lines,
-        f'6. The other {len(train_only)} are close to chance on the test period; for {int(train_only.drift_flag.sum())} of them this could be the drift.',
-        f'7. {len(drift_fcs)} clusters became much more active in 2025 without failures nearby (possible drift).',
+        f'6. The other {len(train_only)} are close to chance on the test period; {int(train_only.drift_flag.sum())} of them fire at least twice as often far from failures in 2025.',
+        f'7. Almost all clusters fire more often in 2025 without failures nearby, {len(drift_fcs)} at least twice as often (also FC5 and FC7).',
         ('', {'gap': 0.015}),
         ('MY QUESTIONS TO YOU', {'weight': 'bold', 'color': NAVY, 'size': 12, 'gap': 0.042}),
         '1. Do the sensors in each cluster belong together physically (page 3)?',
@@ -538,7 +538,7 @@ with PdfPages(os.path.join(REVIEW, 'NB04_Workflow_and_Metrics.pdf')) as pdf:
         ('STEP 5 (Sec. 4.1-4.3): Failure association & temporal pattern', 'Fisher tests; drift-controlled enrichment per phase; event-level test against chance\n'
          f'-> 0 early-warning, {len(precursor)} short-term precursor, {len(detection)} detection-only clusters', RED),
         ('STEP 6 (Sec. 4.4-4.6): Failure days, volatility, drift', 'Failure-related vs. normal days (stratified by period); within-day variance\n'
-         f'before onset (Kendall tau); per-cluster drift flag ({len(drift_fcs)} clusters)', RED),
+         f'before onset (Kendall tau); test/train activity ratio per cluster ({len(drift_fcs)} at least 2x)', RED),
         ('OUTPUT -> NB05', f'{len(fc_ids)} data-driven feature clusters + temporal, location and drift tables.\n'
          'NB05: event-level scoring (verdict on train events, test check), expert sheet (RQ1) -> subsystem datasets (RQ2)', GREEN),
     ]
@@ -599,8 +599,8 @@ with PdfPages(os.path.join(REVIEW, 'NB04_Workflow_and_Metrics.pdf')) as pdf:
          f'with the correlation-based grouping, so binary activation keeps the structure; finer granularity ({hA["clusters"]} vs. {hB["clusters"]}).', '#7c3aed'),
         ('TEMPORAL PATTERN: detection rather than multi-day prediction', f'After correcting for drift, no cluster fires more often 1-6 days before failures.\n'
          f'{" and ".join(precursor) or "No cluster"} are short-term (24 h) precursors; {len(detection)} clusters mainly fire during failures.', RED),
-        ('DRIFT: compare within periods', f'Anomaly rate far from failures: 10.9% (train) vs. 27.4% (test). {len(drift_fcs)} clusters are flagged\n'
-         'as possibly drift-driven; pooled train+test comparisons overstate failure effects.', ORANGE),
+        ('DRIFT: compare within periods', f'Anomaly rate far from failures: 10.9% (train) vs. 27.4% (test). {len(drift_fcs)} clusters fire at least\n'
+         'twice as often far from failures in the test period; pooled train+test comparisons overstate failure effects.', ORANGE),
         ('NEXT: NB05 and expert verification', f'{len(fc_ids)} clusters, no subsystem labels -> event-level scoring (only {", ".join(robust.index)} hold on the test period),\n'
          'prior-model alarms, expert verification sheet (RQ1) -> subsystem datasets for the model comparison (RQ2).', GREEN),
     ]:

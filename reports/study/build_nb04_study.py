@@ -258,10 +258,12 @@ BLOCKS = [
 
     ('b28', 'Output 4.6 · Drift per group', 'drift_rows = []', dict(
         what='For each group: how often it fires far from failures in the training months vs the test months.',
-        read='<b>test_train_ratio</b> = how many times more often in the test months. <b>drift_flag</b> = ratio ≥ 2 and test rate ≥ 1%.',
-        shows='Nine groups are flagged (e.g. FC10: 29× more often in 2025). FC5, FC7 and FC8 are not flagged.',
+        read='<b>test_train_ratio</b> = how many times more often in the test months (1 = the same). <b>…_windows</b> = the number of windows behind each rate. <b>drift_flag</b> = at least twice as often (ratio ≥ 2). <b>few_windows</b> = fewer than 30 windows in one period, so the ratio is unstable. Plot: the label above each pair of bars is the ratio.',
+        shows='<ul><li><b>18 of 19</b> groups fire more often far from failures in the test months; only FC1 fires less.</li>'
+              '<li><b>11</b> at least twice as often, e.g. FC10 (29×), and also <b>FC5</b> (6.8×: 37 → 90 windows) and <b>FC7</b> (2.1×, but only 12 and 9 windows).</li>'
+              '<li>FC8 rises 1.6×.</li></ul>',
         why='Test-period results of flagged groups should be read with care.',
-        careful='The flag rule (≥ 2× and ≥ 1%) is a chosen rule of thumb.'), None),
+        careful='The limit of 2 is a chosen value, not a test, so the ratio itself is the information. FC5 holds on the test months, but it is drift-affected too: it is still significant in the permutation test (which only tests the timing), yet part of its signal may be the general change of 2025.'), None),
 
     ('s5', 'Part 5 · Save', None, None, None),
 

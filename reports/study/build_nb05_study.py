@@ -187,7 +187,7 @@ BLOCKS = [
         shows='<ul><li>Timing: 2 short-term precursors (FC5, FC7), 12 detection-only, 5 weak/mixed, no early warning several days ahead.</li>'
               '<li>Scorecard: 15 KEEP, of which FC7, FC5 and FC8 hold on the test months.</li>'
               '<li>Old models: FC2, FC6, FC18 behind RF false alarms.</li>'
-              '<li>Drift: nine groups flagged.</li><li>Questions Q1–Q5 for the experts.</li></ul>',
+              '<li>Drift: 11 groups fire at least twice as often far from failures in the test months, including FC5 and FC7.</li><li>Questions Q1–Q5 for the experts.</li></ul>',
         why='The basis for the expert meeting and the supervisor update.'), dict(no_text=True)),
     ('n19', 'Output 9b · Saved files', "fc_summary.to_csv(os.path.join(NB05_OUT, 'fc_summary.csv')", dict(
         what='The tables and figures NB05 saves in <code>outputs/nb05_artifacts/</code> (scorecard, permutation test, expert sheet, physics tables, plots).',
